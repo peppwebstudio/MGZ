@@ -1,16 +1,76 @@
-import React from 'react';
+import { Toaster } from "./components/ui/toaster"
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClientInstance } from './utils/query-client'
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import PageNotFound from './pages/PageNotFound';
+import { AuthProvider, useAuth } from './utils/AuthContext';
+import UserNotRegisteredError from './components/layout/UserNotRegisteredError';
+import ScrollToTop from './components/layout/ScrollToTop';
+
+// Page imports
+import Home from './pages/Home';
+import Adesao from './pages/Adesao';
+import Sucesso from './pages/Sucesso';
+import Direcao from './pages/Direcao';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import ProtectedRoute from './components/layout/ProtectedRoute';
+
+const AuthenticatedApp = () => {
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+
+  // Show loading spinner while checking app public settings or auth
+  if (isLoadingPublicSettings || isLoadingAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Handle authentication errors
+  if (authError) {
+    if (authError.type === 'user_not_registered') {
+      return <UserNotRegisteredError />;
+    } else if (authError.type === 'auth_required') {
+      // Redirect to login automatically
+      navigateToLogin();
+      return null;
+    }
+  }
+
+  // Render the main app
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/adesao" element={<Adesao />} />
+      <Route path="/sucesso" element={<Sucesso />} />
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/direcao" element={<Direcao />} />
+      </Route>
+      <Route path="*" element={<PageNotFound />} />
+    </Routes>
+  );
+};
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-blue-600">
-          PWS Template - Setup Concluído!
-        </h1>
-        <p className="text-slate-500">Pronto para receber os componentes do Tom Pumbler.</p>
-      </div>
-    </div>
-  );
+    <AuthProvider>
+      <QueryClientProvider client={queryClientInstance}>
+        <Router>
+          <ScrollToTop />
+          <AuthenticatedApp />
+        </Router>
+        <Toaster />
+      </QueryClientProvider>
+    </AuthProvider>
+  )
 }
 
-export default App;
+export default App
