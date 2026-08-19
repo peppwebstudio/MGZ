@@ -2,9 +2,9 @@ import { Toaster } from "./components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from './utils/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import PageNotFound from './pages/PageNotFound';
+import PageNotFound from './components/ui/PageNotFound';
 import { AuthProvider, useAuth } from './utils/AuthContext';
-import UserNotRegisteredError from './components/layout/UserNotRegisteredError';
+import UserNotRegisteredError from './components/ui/UserNotRegisteredError';
 import ScrollToTop from './components/layout/ScrollToTop';
 
 // Page imports
