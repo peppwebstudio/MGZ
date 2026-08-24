@@ -1,0 +1,512 @@
+import { useState } from "react";
+import SiteHeader from "../components/site/SiteHeader";
+import { ShoppingCart, Plus, Minus, Trash2, X, Check } from "lucide-react";
+
+const PRODUCTS = [
+  {
+    id: 1,
+    name: "Camisa Oficial Manguezal 2026",
+    priceSocio: 79.90,
+    priceNormal: 89.90,
+    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80",
+    description: "Camisa dry-fit de alta performance com a estampa oficial da Atlética Manguezal. Tecido leve, respirável e secagem rápida.",
+    sizes: ["PP", "P", "M", "G", "GG"]
+  },
+  {
+    id: 2,
+    name: "Regata Cavada de Treino",
+    priceSocio: 49.90,
+    priceNormal: 59.90,
+    image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80",
+    description: "Ideal para treinos intensos. Corte nadador com cava ampla para máxima liberdade de movimento nas partidas.",
+    sizes: ["P", "M", "G", "GG"]
+  },
+  {
+    id: 3,
+    name: "Mochila Bag Manguezal Sports",
+    priceSocio: 109.90,
+    priceNormal: 129.90,
+    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80",
+    description: "Compartimento exclusivo para tênis e roupas molhadas. Perfeita para carregar seu kit de treino da atlética.",
+    sizes: ["Único"]
+  },
+  {
+    id: 4,
+    name: "Boné Trucker Laranja & Preto",
+    priceSocio: 35.00,
+    priceNormal: 45.00,
+    image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&auto=format&fit=crop&q=80",
+    description: "Boné estilo trucker com bordado em alto relevo da Manguezal. Ajuste snapback traseiro.",
+    sizes: ["Único"]
+  },
+  {
+    id: 5,
+    name: "Garrafa Térmica Inox 1L",
+    priceSocio: 59.90,
+    priceNormal: 69.90,
+    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80",
+    description: "Conserva gelado por até 24h. Ideal para levar pros treinos sob o sol de Pernambuco.",
+    sizes: ["Único"]
+  },
+  {
+    id: 6,
+    name: "Moletom Canguru Manguezal",
+    priceSocio: 159.90,
+    priceNormal: 179.90,
+    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80",
+    description: "Moletom flanelado super confortável, bolso frontal e capuz forrado com estampa exclusiva.",
+    sizes: ["P", "M", "G", "GG", "XG"]
+  }
+];
+
+export default function Loja() {
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedType, setSelectedType] = useState("socio"); // 'socio' ou 'normal'
+  const [productTypes, setProductTypes] = useState({}); // Seleção de cada card
+  const [quantity, setQuantity] = useState(1);
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [addedToast, setAddedToast] = useState(false);
+
+  // Retorna se o card está selecionado como "socio" ou "normal" (Padrão: "socio")
+  const getProductType = (productId) => productTypes[productId] || "socio";
+
+  // Abrir modal do produto
+  const handleOpenProduct = (product) => {
+    setSelectedProduct(product);
+    setSelectedSize(product.sizes[0]);
+    setSelectedType(getProductType(product.id));
+    setQuantity(1);
+  };
+
+  // Adicionar item ao carrinho
+  const handleAddToCart = () => {
+    if (!selectedProduct) return;
+
+    const currentPrice = selectedType === "socio" ? selectedProduct.priceSocio : selectedProduct.priceNormal;
+    const userTypeLabel = selectedType === "socio" ? "Sócio Atleta" : "Geral";
+
+    const cartItem = {
+      cartId: `${selectedProduct.id}-${selectedSize}-${selectedType}`,
+      id: selectedProduct.id,
+      name: selectedProduct.name,
+      price: currentPrice,
+      userType: userTypeLabel,
+      image: selectedProduct.image,
+      size: selectedSize,
+      quantity: quantity
+    };
+
+    setCart((prevCart) => {
+      const existingIndex = prevCart.findIndex((item) => item.cartId === cartItem.cartId);
+      if (existingIndex > -1) {
+        const updated = [...prevCart];
+        updated[existingIndex].quantity += quantity;
+        return updated;
+      }
+      return [...prevCart, cartItem];
+    });
+
+    setSelectedProduct(null);
+    setAddedToast(true);
+    setTimeout(() => setAddedToast(false), 3000);
+  };
+
+  // Alterar quantidade no carrinho
+  const updateCartQuantity = (cartId, delta) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((item) => {
+          if (item.cartId === cartId) {
+            const newQty = item.quantity + delta;
+            return newQty > 0 ? { ...item, quantity: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean)
+    );
+  };
+
+  // Remover item
+  const removeFromCart = (cartId) => {
+    setCart((prev) => prev.filter((item) => item.cartId !== cartId));
+  };
+
+  const totalCartValue = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const totalCartItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  return (
+    <div className="min-h-screen bg-neutral-950 text-white flex flex-col font-sans">
+      <SiteHeader />
+
+      {/* Banner Principal da Lojinha */}
+      <section className="bg-gradient-to-r from-neutral-900 via-neutral-900 to-black border-b border-neutral-800 py-10 px-4 relative overflow-hidden">
+        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-[#ea580c]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+          <div>
+            <span className="text-xs uppercase font-bold tracking-widest text-[#ea580c] bg-[#ea580c]/10 px-3 py-1 rounded-full border border-[#ea580c]/20">
+              Produtos Oficiais
+            </span>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white mt-3">
+              LOJINHA MANGUEZAL
+            </h1>
+            <p className="text-neutral-400 text-sm md:text-base mt-2 max-w-lg">
+              Vista a armadura da Manguezal. Roupas e acessórios exclusivos para treinos, jogos e pro dia a dia.
+            </p>
+          </div>
+
+          {/* Botão do Carrinho Flutuante no Banner */}
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="flex items-center gap-3 bg-[#ea580c] hover:bg-[#c2410c] text-white px-5 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-105"
+          >
+            <div className="relative">
+              <ShoppingCart className="w-5 h-5" />
+              {totalCartItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-black text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                  {totalCartItems}
+                </span>
+              )}
+            </div>
+            <span>Meu Carrinho</span>
+            {totalCartValue > 0 && (
+              <span className="bg-black/30 px-2 py-0.5 rounded text-xs font-semibold">
+                R$ {totalCartValue.toFixed(2)}
+              </span>
+            )}
+          </button>
+        </div>
+      </section>
+
+      {/* Grid de Produtos */}
+      <main className="max-w-7xl mx-auto px-4 py-10 flex-1 w-full">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {PRODUCTS.map((product) => {
+            const currentType = getProductType(product.id);
+            const currentPrice = currentType === "socio" ? product.priceSocio : product.priceNormal;
+
+            return (
+              <div
+                key={product.id}
+                onClick={() => handleOpenProduct(product)}
+                className="bg-neutral-900 border border-neutral-800 hover:border-[#ea580c]/50 rounded-2xl overflow-hidden cursor-pointer group transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[#ea580c]/5 flex flex-col justify-between"
+              >
+                <div>
+                  {/* Imagem do Produto */}
+                  <div className="relative aspect-square overflow-hidden bg-neutral-950">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+
+                  {/* Info do Produto */}
+                  <div className="p-3.5 space-y-3">
+                    <h3 className="text-sm font-semibold text-neutral-200 line-clamp-2 group-hover:text-[#ea580c] transition-colors">
+                      {product.name}
+                    </h3>
+
+                    {/* Dupla Seleção de Categoria (Sócio x Geral) */}
+                    <div
+                      className="grid grid-cols-2 gap-1 bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-[11px] font-semibold"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setProductTypes((prev) => ({ ...prev, [product.id]: "socio" }))}
+                        className={`py-1 px-1 rounded-lg text-center transition-all ${
+                          currentType === "socio"
+                            ? "bg-[#ea580c] text-white font-bold shadow"
+                            : "text-neutral-400 hover:text-white"
+                        }`}
+                      >
+                        Sócio
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProductTypes((prev) => ({ ...prev, [product.id]: "normal" }))}
+                        className={`py-1 px-1 rounded-lg text-center transition-all ${
+                          currentType === "normal"
+                            ? "bg-neutral-800 text-white font-bold"
+                            : "text-neutral-400 hover:text-white"
+                        }`}
+                      >
+                        Geral
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preço e Ação */}
+                <div className="p-3.5 pt-2 flex items-end justify-between">
+                  <div>
+                    <span className="text-lg font-extrabold text-[#ea580c]">
+                      R$ {currentPrice.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="w-8 h-8 rounded-lg bg-neutral-800 group-hover:bg-[#ea580c] text-neutral-300 group-hover:text-white flex items-center justify-center transition-colors">
+                    <Plus className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </main>
+
+      {/* MODAL POP-UP DE DETALHES E TAMANHO DO PRODUTO */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative flex flex-col md:flex-row max-h-[90vh] overflow-y-auto">
+            {/* Botão de Fechar */}
+            <button
+              onClick={() => setSelectedProduct(null)}
+              className="absolute top-3 right-3 z-10 bg-black/60 text-neutral-400 hover:text-white p-2 rounded-full backdrop-blur-md transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Imagem do Produto */}
+            <div className="md:w-1/2 bg-neutral-950 relative min-h-[250px]">
+              <img
+                src={selectedProduct.image}
+                alt={selectedProduct.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Formulário de Seleção */}
+            <div className="md:w-1/2 p-6 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <span className="text-xs text-[#ea580c] font-bold uppercase tracking-wider">
+                  Coleção Manguezal
+                </span>
+                <h2 className="text-xl font-bold text-white">{selectedProduct.name}</h2>
+
+                {/* Preço dinâmico conforme categoria selecionada na modal */}
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-black text-[#ea580c]">
+                    R$ {(selectedType === "socio" ? selectedProduct.priceSocio : selectedProduct.priceNormal).toFixed(2)}
+                  </span>
+                </div>
+
+                <p className="text-xs text-neutral-400 leading-relaxed">
+                  {selectedProduct.description}
+                </p>
+
+                {/* Seleção de Categoria (Sócio x Geral) */}
+                <div className="pt-2">
+                  <label className="text-xs font-semibold text-neutral-300 block mb-2">
+                    Categoria:
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedType("socio")}
+                      className={`py-2 px-2 rounded-lg text-xs font-bold transition-all ${
+                        selectedType === "socio"
+                          ? "bg-[#ea580c] text-white border border-[#ea580c]"
+                          : "bg-neutral-800 text-neutral-300 border border-neutral-700 hover:bg-neutral-700"
+                      }`}
+                    >
+                      Sócio Atleta (R$ {selectedProduct.priceSocio.toFixed(2)})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedType("normal")}
+                      className={`py-2 px-2 rounded-lg text-xs font-bold transition-all ${
+                        selectedType === "normal"
+                          ? "bg-neutral-800 text-white border border-neutral-500"
+                          : "bg-neutral-800 text-neutral-300 border border-neutral-700 hover:bg-neutral-700"
+                      }`}
+                    >
+                      Geral (R$ {selectedProduct.priceNormal.toFixed(2)})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Seleção de Tamanho */}
+                <div className="pt-2">
+                  <label className="text-xs font-semibold text-neutral-300 block mb-2">
+                    Tamanho:
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProduct.sizes.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          selectedSize === size
+                            ? "bg-[#ea580c] text-white border border-[#ea580c]"
+                            : "bg-neutral-800 text-neutral-300 border border-neutral-700 hover:bg-neutral-700"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Controle de Quantidade */}
+                <div className="pt-2">
+                  <label className="text-xs font-semibold text-neutral-300 block mb-2">
+                    Quantidade:
+                  </label>
+                  <div className="flex items-center gap-3 bg-neutral-950 w-max p-1 rounded-lg border border-neutral-800">
+                    <button
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-white rounded hover:bg-neutral-800"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-sm font-bold text-white px-2">{quantity}</span>
+                    <button
+                      onClick={() => setQuantity((q) => q + 1)}
+                      className="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-white rounded hover:bg-neutral-800"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botão de Adicionar */}
+              <button
+                onClick={handleAddToCart}
+                className="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 mt-4"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Adicionar ao Carrinho
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GAVETA / MODAL DO CARRINHO */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-end">
+          <div className="bg-neutral-900 border-l border-neutral-800 w-full max-w-md h-full p-6 flex flex-col justify-between shadow-2xl relative animate-in slide-in-from-right duration-200">
+            {/* Header do Carrinho */}
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-neutral-800">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5 text-[#ea580c]" />
+                  <h3 className="text-lg font-bold text-white">Seu Carrinho</h3>
+                </div>
+                <button
+                  onClick={() => setIsCartOpen(false)}
+                  className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-neutral-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Lista de Itens */}
+              <div className="mt-4 space-y-3 overflow-y-auto max-h-[55vh] pr-1">
+                {cart.length === 0 ? (
+                  <div className="text-center py-12 text-neutral-500 space-y-2">
+                    <ShoppingCart className="w-12 h-12 mx-auto opacity-30" />
+                    <p className="text-sm">Seu carrinho está vazio.</p>
+                  </div>
+                ) : (
+                  cart.map((item) => (
+                    <div
+                      key={item.cartId}
+                      className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl flex items-center justify-between gap-3"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-14 h-14 object-cover rounded-lg bg-neutral-900 shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">{item.name}</p>
+                        <p className="text-[11px] text-neutral-400">
+                          Tam: <span className="text-neutral-200 font-bold">{item.size}</span> •{" "}
+                          <span className="text-[#ea580c] font-semibold">{item.userType}</span>
+                        </p>
+                        <p className="text-xs font-bold text-[#ea580c] mt-0.5">
+                          R$ {(item.price * item.quantity).toFixed(2)}
+                        </p>
+                      </div>
+
+                      {/* Controles de Quantidade */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => updateCartQuantity(item.cartId, -1)}
+                          className="w-6 h-6 rounded bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-neutral-300"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-xs font-bold px-1">{item.quantity}</span>
+                        <button
+                          onClick={() => updateCartQuantity(item.cartId, 1)}
+                          className="w-6 h-6 rounded bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-neutral-300"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.cartId)}
+                          className="w-6 h-6 rounded text-red-400 hover:text-red-300 ml-1 flex items-center justify-center"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Total e Checkout */}
+            {cart.length > 0 && (
+              <div className="border-t border-neutral-800 pt-4 space-y-3">
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex justify-between text-neutral-400">
+                    <span>Subtotal</span>
+                    <span>R$ {totalCartValue.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-neutral-400">
+                    <span>Retirada no Treino</span>
+                    <span className="text-green-400 font-semibold">Grátis</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-neutral-800">
+                    <span>Total</span>
+                    <span className="text-[#ea580c] text-lg">R$ {totalCartValue.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => alert("Preparamos o pedido! Em breve ligaremos com o Asaas aqui.")}
+                  className="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+                >
+                  Ir para o Pagamento
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TOAST NOTIFICATION (Adicionado ao carrinho) */}
+      {addedToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#ea580c] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 text-sm font-bold animate-in fade-in slide-in-from-bottom-5">
+          <Check className="w-4 h-4 bg-white text-[#ea580c] rounded-full p-0.5" />
+          Produto adicionado ao carrinho!
+        </div>
+      )}
+
+      {/* FOOTER */}
+      <footer className="bg-black border-t border-neutral-800 py-8 px-4 text-center text-xs text-neutral-500 mt-auto">
+        <div className="max-w-7xl mx-auto space-y-2">
+          <p className="font-bold text-neutral-400">ATLETICA MANGUEZAL © 2026</p>
+          <p>Todos os direitos reservados. Entregas e retiradas nos locais oficiais de treino.</p>
+        </div>
+      </footer>
+    </div>
+  );
+}

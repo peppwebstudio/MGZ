@@ -1,76 +1,31 @@
-import { Toaster } from "./components/ui/toaster"
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClientInstance } from './utils/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import PageNotFound from './components/ui/PageNotFound';
-import { AuthProvider, useAuth } from './utils/AuthContext';
-import UserNotRegisteredError from './components/ui/UserNotRegisteredError';
-import ScrollToTop from './components/layout/ScrollToTop';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "@/pages/Home";
+import Adesao from "@/pages/Adesao";
+import Sucesso from "@/pages/Sucesso";
+import Login from "@/pages/Login";   
+import Direcao from "@/pages/Direcao"; 
+import Loja from "@/pages/Loja";
 
-// Page imports
-import Home from './pages/Home';
-import Adesao from './pages/Adesao';
-import Sucesso from './pages/Sucesso';
-import Direcao from './pages/Direcao';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import ProtectedRoute from './components/layout/ProtectedRoute';
-
-const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
-
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
-  }
-
-  // Render the main app
+export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/" element={<Home />} />
-      <Route path="/adesao" element={<Adesao />} />
-      <Route path="/sucesso" element={<Sucesso />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/direcao" element={<Direcao />} />
-      </Route>
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/adesao" element={<Adesao />} />
+        <Route path="/sucesso" element={<Sucesso />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/direcao" element={<Direcao />} />    
+        <Route path="/loja" element={<Loja />} />
+        <Route path="*" element={
+          <div className="min-h-screen flex flex-col items-center justify-center text-center p-4 bg-gray-50">
+            <h1 className="text-6xl font-bold text-[#7a1c19] mb-4">404</h1>
+            <p className="text-xl text-gray-500 mb-6">Ops! Essa página não existe.</p>
+            <a href="/" className="px-6 py-3 bg-orange-600 text-white font-bold rounded-md hover:bg-orange-700 transition">
+              Voltar para o início
+            </a>
+          </div>
+        } />
+      </Routes>
+    </BrowserRouter>
   );
-};
-
-function App() {
-  return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
-  )
 }
-
-export default App
