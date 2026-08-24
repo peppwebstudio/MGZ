@@ -20,20 +20,21 @@ app.get("/ping", (req, res) => {
   res.send("Servidor Manguezal rodando perfeitamente!");
 });
 
-// 2. Rota para gerar a cobrança PIX
+// 2. Rota para gerar cobrança PIX avulsa
 app.post("/api/criar-pix", async (req, res) => {
   try {
-    const { name, cpfCnpj, email, value, description } = req.body;
+    const { name, cpfCnpj, email, phone, value, description } = req.body;
 
     // Criar ou buscar cliente no Asaas
     const customerResponse = await asaasAPI.post("/customers", {
       name,
       cpfCnpj,
       email,
+      mobilePhone: phone,
     });
     const customerId = customerResponse.data.id;
 
-    // Criar a cobrança PIX com vencimento para hoje
+    // Criar cobrança PIX
     const today = new Date().toISOString().split("T")[0];
     const paymentResponse = await asaasAPI.post("/payments", {
       customer: customerId,
@@ -44,21 +45,121 @@ app.post("/api/criar-pix", async (req, res) => {
     });
     const paymentId = paymentResponse.data.id;
 
-    // Buscar o QR Code e a chave copia e cola do PIX
+    // Buscar QR Code e chave Copia e Cola
     const pixResponse = await asaasAPI.get(`/payments/${paymentId}/pixQrCode`);
 
     return res.json({
       paymentId: paymentId,
-      encodedImage: pixResponse.data.encodedImage, // Imagem Base64 do QR Code
-      payload: pixResponse.data.payload,           // Chave PIX Copia e Cola
+      encodedImage: pixResponse.data.encodedImage,
+      payload: pixResponse.data.payload,
     });
   } catch (error) {
     console.error("Erro ao gerar PIX:", error.response?.data || error.message);
-    return res.status(500).json({ error: "Falha ao gerar cobrança PIX" });
+    return res.status(500).json({
+      error: error.response?.data?.errors?.[0]?.description || "Falha ao gerar cobrança PIX.",
+    });
   }
 });
 
-// 3. Rota do Webhook do Asaas (Recebe confirmações em tempo real)
+// 3. Rota para pagamento único no Cartão de Crédito
+app.post("/api/criar-cartao", async (req, res) => {
+  try {
+    const { name, cpfCnpj, email, phone, value, description, creditCard, creditCardHolderInfo } = req.body;
+
+    const customerResponse = await asaasAPI.post("/customers", {
+      name,
+      cpfCnpj,
+      email,
+      mobilePhone: phone,
+    });
+    const customerId = customerResponse.data.id;
+
+    const today = new Date().toISOString().split("T")[0];
+    const paymentResponse = await asaasAPI.post("/payments", {
+      customer: customerId,
+      billingType: "CREDIT_CARD",
+      value,
+      dueDate: today,
+      description: description || "Pagamento Manguezal",
+      creditCard,
+      creditCardHolderInfo,
+    });
+
+    return res.json({
+      paymentId: paymentResponse.data.id,
+      status: paymentResponse.data.status,
+    });
+  } catch (error) {
+    console.error("Erro no cartão:", error.response?.data || error.message);
+    return res.status(500).json({
+      error: error.response?.data?.errors?.[0]?.description || "Falha ao processar cartão de crédito.",
+    });
+  }
+});
+
+// 4. Rota para criar Assinatura Recorrente (Mensal / Anual - PIX ou Cartão)
+app.post("/api/criar-assinatura", async (req, res) => {
+  try {
+    const { name, cpfCnpj, email, phone, value, cycle, billingType, creditCard, creditCardHolderInfo } = req.body;
+
+    const customerResponse = await asaasAPI.post("/customers", {
+      name,
+      cpfCnpj,
+      email,
+      mobilePhone: phone,
+    });
+    const customerId = customerResponse.data.id;
+
+    const today = new Date().toISOString().split("T")[0];
+    const subData = {
+      customer: customerId,
+      billingType: billingType || "CREDIT_CARD",
+      value,
+      nextDueDate: today,
+      cycle: cycle || "MONTHLY",
+      description: "Associação Atlética Manguezal",
+    };
+
+    if (billingType === "CREDIT_CARD") {
+      subData.creditCard = creditCard;
+      subData.creditCardHolderInfo = creditCardHolderInfo;
+    }
+
+    const subResponse = await asaasAPI.post("/subscriptions", subData);
+    const subscriptionId = subResponse.data.id;
+
+    // Se for assinatura no PIX, busca a 1ª cobrança para devolver o QR Code imediato
+    if (billingType === "PIX") {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const paymentsResponse = await asaasAPI.get(`/subscriptions/${subscriptionId}/payments`);
+      const firstPayment = paymentsResponse.data.data?.[0];
+
+      if (firstPayment) {
+        const pixResponse = await asaasAPI.get(`/payments/${firstPayment.id}/pixQrCode`);
+        return res.json({
+          subscriptionId,
+          paymentId: firstPayment.id,
+          encodedImage: pixResponse.data.encodedImage,
+          payload: pixResponse.data.payload,
+          billingType: "PIX",
+        });
+      }
+    }
+
+    return res.json({
+      subscriptionId,
+      status: subResponse.data.status || "ACTIVE",
+      billingType,
+    });
+  } catch (error) {
+    console.error("Erro na assinatura:", error.response?.data || error.message);
+    return res.status(500).json({
+      error: error.response?.data?.errors?.[0]?.description || "Falha ao criar assinatura.",
+    });
+  }
+});
+
+// 5. Rota do Webhook do Asaas
 app.post("/webhook/asaas", (req, res) => {
   const evento = req.body;
   console.log("Notificação do Asaas recebida:", evento.event);
@@ -66,7 +167,6 @@ app.post("/webhook/asaas", (req, res) => {
   if (evento.event === "PAYMENT_RECEIVED" || evento.event === "PAYMENT_CONFIRMED") {
     const pagamento = evento.payment;
     console.log(`✅ Pagamento Aprovado! Valor: R$ ${pagamento.value} | ID: ${pagamento.id}`);
-    // Aqui entra a lógica futura para atualizar status no banco de dados
   }
 
   res.status(200).send("OK");
