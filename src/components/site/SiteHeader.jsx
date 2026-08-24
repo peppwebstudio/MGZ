@@ -7,6 +7,13 @@ const LOGO_URL = "https://media.base44.com/images/public/user_6a5a5a27bba26be00d
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
 
+  const navLinks = [
+    { name: "Conquistas", href: "/#conquistas" },
+    { name: "Modalidades", href: "/#modalidades" },
+    { name: "Planos", href: "/#planos" },
+    { name: "Parcerias", href: "/#parcerias" },
+  ];
+
   return (
     <header className="sticky top-0 z-50 bg-black text-white border-b border-[#ea580c]/30">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -15,13 +22,20 @@ export default function SiteHeader() {
           <span className="font-display text-xl tracking-wider text-white">MANGUEZAL</span>
         </Link>
 
+        {/* Navegação Principal com efeito de linha deslizante no Hover */}
         <nav className="hidden md:flex items-center gap-6 text-sm">
-          <a href="/#conquistas" className="hover:text-[#ea580c] transition-colors">Conquistas</a>
-          <a href="/#modalidades" className="hover:text-[#ea580c] transition-colors">Modalidades</a>
-          <a href="/#planos" className="hover:text-[#ea580c] transition-colors">Planos</a>
-          <a href="/#parcerias" className="hover:text-[#ea580c] transition-colors">Parcerias</a>
+          {navLinks.map((link) => (
+            <a
+              key={link.name}
+              href={link.href}
+              className="relative group py-1 text-white hover:text-[#ea580c] transition-colors"
+            >
+              {link.name}
+              <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#ea580c] transition-all duration-300 ease-out group-hover:w-full" />
+            </a>
+          ))}
           
-          {/* Novo Botão de Lojinha */}
+          {/* Botão de Lojinha */}
           <Link 
             to="/loja" 
             className="flex items-center gap-1.5 font-semibold text-[#ea580c] hover:text-[#c2410c] transition-colors bg-[#ea580c]/10 px-3 py-1 rounded-full border border-[#ea580c]/30"
@@ -32,16 +46,18 @@ export default function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
+          {/* Botão Gestão Laranja */}
           <Link 
             to="/login" 
-            className="hidden sm:block text-xs text-white/60 hover:text-white transition-colors"
+            className="hidden sm:inline-flex items-center justify-center bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold px-4 py-2 rounded-md text-sm transition-all shadow-lg shadow-[#ea580c]/20 border border-[#ea580c]"
           >
-            Entrar
+            Gestão
           </Link>
 
+          {/* Botão Quero me Associar Laranja */}
           <Link 
             to="/adesao" 
-            className="bg-[#ea580c] hover:bg-[#c2410c] text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors inline-block text-center"
+            className="bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold px-4 py-2 rounded-md text-sm transition-all shadow-lg shadow-[#ea580c]/20 border border-[#ea580c] inline-block text-center"
           >
             Quero me associar
           </Link>
@@ -61,8 +77,12 @@ export default function SiteHeader() {
           <Link to="/loja" onClick={() => setOpen(false)} className="text-[#ea580c] font-semibold flex items-center gap-2">
             <ShoppingBag className="w-4 h-4" /> Lojinha Manguezal
           </Link>
-          <Link to="/login" onClick={() => setOpen(false)} className="hover:text-white text-white/60">
-            Entrar
+          <Link 
+            to="/login" 
+            onClick={() => setOpen(false)} 
+            className="bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold px-4 py-2 rounded-md text-center transition-colors mt-1"
+          >
+            Gestão
           </Link>
         </nav>
       )}

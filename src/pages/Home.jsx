@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Medal, ChevronRight } from "lucide-react";
 import SiteHeader from "@/components/site/SiteHeader";
+import HeroCarousel from "@/components/site/HeroCarousel"; 
 
 const LOGO_URL = "https://media.base44.com/images/public/user_6a5a5a27bba26be00ddf4962/9495250e0_WhatsAppImage2026-08-18at61659PM.jpeg";
 const MEDCOF_URL = "https://media.base44.com/images/public/user_6a5a5a27bba26be00ddf4962/648490fd1_imagem_2026-08-18_184111269.png";
@@ -15,7 +16,7 @@ const CONQUISTAS = [
   { label: "Campeã Geral", event: "VI Intermed Pernambuco", color: "text-yellow-500" },
   { label: "2º Lugar Geral", event: "IV Intermed Nordeste Litoral Leste", color: "text-gray-400" },
   { label: "2º Lugar Geral", event: "I Intermed Pernambuco", color: "text-gray-400" },
-  {label: "2º Lugar Geral", event: "I Intermed Recife", color: "text-gray-400" },
+  { label: "2º Lugar Geral", event: "I Intermed Recife", color: "text-gray-400" },
   { label: "3º Lugar Geral", event: "V Intermed Nordeste Litoral Leste", color: "text-amber-700" },
 ];
 
@@ -29,7 +30,7 @@ const getPlanDescription = (p) => {
   return map[p.payment_type] || "";
 };
 
-// Dados locais (mock) para substituir as chamadas do banco de dados do Base44
+// Dados locais (mock)
 const MOCK_MODALITIES = [
   { id: "mod_1", sport: "Futsal", division: "male" },
   { id: "mod_2", sport: "Futsal", division: "female" },
@@ -50,7 +51,6 @@ export default function Home() {
   const [plans, setPlans] = useState([]);
 
   useEffect(() => {
-    // Simulando o carregamento dos dados sem usar o base44Client
     setModalities(MOCK_MODALITIES);
     setPlans(MOCK_PLANS);
   }, []);
@@ -64,8 +64,12 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <SiteHeader />
-      
+
       <main className="flex-1">
+        {/* CARROSSEL DE BANNERS (Lojinha, campeonatos, etc) */}
+        <HeroCarousel />
+
+        {/* SEÇÃO PRINCIPAL DA MANGUEZAL (Design original de volta) */}
         <section className="relative bg-gradient-to-b from-[#7a1c19] to-black text-white py-20 md:py-32 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(229,61,14,0.15),transparent_70%)]" />
           <div className="relative max-w-4xl mx-auto px-4 text-center">
@@ -189,7 +193,6 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer simples integrado */}
       <footer className="bg-black text-white py-8 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-sm text-white/50">

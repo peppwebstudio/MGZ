@@ -1,6 +1,9 @@
 import { useState } from "react";
 import SiteHeader from "../components/site/SiteHeader";
-import { ShoppingCart, Plus, Minus, Trash2, X, Check } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, X, Check, Copy, Loader2 } from "lucide-react";
+
+// ⚠️ COLE AQUI A SUA URL GERADA NO RENDER:
+const BACKEND_URL = "https://manguezal-backend.onrender.com";
 
 const PRODUCTS = [
   {
@@ -69,6 +72,14 @@ export default function Loja() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
 
+  // Estados do Checkout e Pagamento PIX
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [customer, setCustomer] = useState({ name: "", cpf: "", email: "" });
+  const [pixData, setPixData] = useState(null);
+  const [loadingPix, setLoadingPix] = useState(false);
+  const [pixError, setPixError] = useState("");
+  const [copied, setCopied] = useState(false);
+
   // Retorna se o card está selecionado como "socio" ou "normal" (Padrão: "socio")
   const getProductType = (productId) => productTypes[productId] || "socio";
 
@@ -135,6 +146,62 @@ export default function Loja() {
 
   const totalCartValue = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const totalCartItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  // Abrir Modal de Checkout
+  const handleOpenCheckout = () => {
+    setIsCartOpen(false);
+    setIsCheckoutOpen(true);
+    setPixData(null);
+    setPixError("");
+  };
+
+  // Gerar o PIX via API do Render/Asaas
+  const handleGerarPix = async (e) => {
+    e.preventDefault();
+    if (!customer.name || !customer.cpf || !customer.email) {
+      setPixError("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    setLoadingPix(true);
+    setPixError("");
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/criar-pix`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: customer.name,
+          cpfCnpj: customer.cpf.replace(/\D/g, ""),
+          email: customer.email,
+          value: totalCartValue,
+          description: `Compra Lojinha Manguezal (${totalCartItems} itens)`
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.encodedImage) {
+        setPixData(data);
+      } else {
+        setPixError(data.error || "Ocorreu um erro ao gerar o PIX. Verifique os dados.");
+      }
+    } catch (err) {
+      console.error("Erro ao conectar ao backend:", err);
+      setPixError("Não foi possível conectar ao servidor de pagamentos.");
+    } finally {
+      setLoadingPix(false);
+    }
+  };
+
+  // Copiar código PIX para a área de transferência
+  const handleCopyPix = () => {
+    if (pixData?.payload) {
+      navigator.clipboard.writeText(pixData.payload);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex flex-col font-sans">
@@ -481,10 +548,147 @@ export default function Loja() {
                 </div>
 
                 <button
-                  onClick={() => alert("Preparamos o pedido! Em breve ligaremos com o Asaas aqui.")}
-                  className="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+                  onClick={handleOpenCheckout}
+                  className="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#ea580c]/20"
                 >
                   Ir para o Pagamento
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CHECKOUT & PIX ASAAS */}
+      {isCheckoutOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <button
+              onClick={() => setIsCheckoutOpen(false)}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-white p-1 rounded-lg"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {!pixData ? (
+              <form onSubmit={handleGerarPix} className="space-y-4">
+                <div className="border-b border-neutral-800 pb-3">
+                  <h3 className="text-lg font-bold text-white">Finalizar Compra via PIX</h3>
+                  <p className="text-xs text-neutral-400 mt-1">
+                    Total a pagar: <strong className="text-[#ea580c]">R$ {totalCartValue.toFixed(2)}</strong>
+                  </p>
+                </div>
+
+                {pixError && (
+                  <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-xl">
+                    {pixError}
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-300 block mb-1">
+                      Nome Completo
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Jamyle Silva"
+                      value={customer.name}
+                      onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#ea580c]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-300 block mb-1">
+                      CPF
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="000.000.000-00"
+                      value={customer.cpf}
+                      onChange={(e) => setCustomer({ ...customer, cpf: e.target.value })}
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#ea580c]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-300 block mb-1">
+                      E-mail
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="atleta@email.com"
+                      value={customer.email}
+                      onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#ea580c]"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loadingPix}
+                  className="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm mt-2 disabled:opacity-50"
+                >
+                  {loadingPix ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Gerando PIX...
+                    </>
+                  ) : (
+                    "Gerar QR Code PIX"
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* EXIBIÇÃO DO PIX GERADO */
+              <div className="text-center space-y-4">
+                <div className="border-b border-neutral-800 pb-3">
+                  <h3 className="text-lg font-bold text-white">Pagamento PIX Gerado!</h3>
+                  <p className="text-xs text-neutral-400 mt-1">
+                    Escaneie o QR Code abaixo com o aplicativo do seu banco:
+                  </p>
+                </div>
+
+                <div className="bg-white p-3 rounded-2xl w-max mx-auto border-4 border-[#ea580c]/20">
+                  <img
+                    src={`data:image/png;base64,${pixData.encodedImage}`}
+                    alt="QR Code PIX"
+                    className="w-48 h-48"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs text-neutral-400 font-semibold">Ou copie o código abaixo:</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={pixData.payload}
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-300 truncate focus:outline-none"
+                    />
+                    <button
+                      onClick={handleCopyPix}
+                      className="bg-[#ea580c] hover:bg-[#c2410c] text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shrink-0"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? "Copiado!" : "Copiar"}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setIsCheckoutOpen(false);
+                    setCart([]);
+                  }}
+                  className="w-full bg-neutral-800 hover:bg-neutral-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors mt-2"
+                >
+                  Concluir / Já Realizei o Pagamento
                 </button>
               </div>
             )}
