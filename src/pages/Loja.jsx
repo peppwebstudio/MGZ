@@ -216,7 +216,7 @@ export default function Loja() {
               Produtos Oficiais
             </span>
             <h1 className="text-3xl md:text-5xl font-extrabold text-white mt-3">
-              LOJINHA MANGUEZAL
+              MANGUESTORE
             </h1>
             <p className="text-neutral-400 text-sm md:text-base mt-2 max-w-lg">
               Vista a armadura da Manguezal. Roupas e acessórios exclusivos para treinos, jogos e pro dia a dia.
