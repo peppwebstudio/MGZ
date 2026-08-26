@@ -149,6 +149,114 @@ const PRODUCTS = [
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221940802.png",
     description: "Bandana Retrô, ideal para usar no dia a dia e nas festas",
     sizes: ["Único"]
+  },
+  {
+    id: 17,
+    name: "Bandana Comum",
+    priceSocio: 35.00,
+    priceNormal: 45.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_222713448.png",
+    description: "Bandana Comum, ideal para usar no dia a dia e nas festas",
+    sizes: ["Único"]
+  },
+  {
+    id: 18,
+    name: "Tube Top Laranja",
+    priceSocio: 60.00,
+    priceNormal: 70.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_223658514.png",
+    description: "Tube Top Laranja, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 19,
+    name: "Tube Top Preto",
+    priceSocio: 60.00,
+    priceNormal: 70.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_223229703.png",
+    description: "Tube Top Preto, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 20,
+    name: "Top Regatinha Preto",
+    priceSocio: 70.00,
+    priceNormal: 80.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_224520724.png",
+    description: "Top Regatinha Preto, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG", "XXG"]
+  },
+  {
+    id: 21,
+    name: "Top Amarração Preto",
+    priceSocio: 65.00,
+    priceNormal: 80.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_232516068.png",
+    description: "Top Amarração Preto, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG", "XXG"]
+  },
+  {
+    id: 22,
+    name: "Calça Dry Fit",
+    priceSocio: 80.00,
+    priceNormal: 90.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_234210187.png",
+    description: "Calça Dry Fit, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG"]
+  },
+  {
+    id: 23,
+    name: "Short Saia ",
+    priceSocio: 67.00,
+    priceNormal: 77.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_234401935.png",
+    description: "Short Saia , ideal para usar no dia a dia e nas festas",
+    sizes: ["P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 24,
+    name: "Short Doll",
+    priceSocio: 45.00,
+    priceNormal: 55.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_235006981.png",
+    description: "Short Doll, ideal para usar no dia a dia e nas festas",
+    sizes: ["P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 25,
+    name: "Calção Esportivo",
+    priceSocio: 47.00,
+    priceNormal: 57.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_235159098.png",
+    description: "Calção Esportivo, ideal para usar no dia a dia e nos treinos",
+    sizes: ["P", "M", "G", "GG"]
+  },
+  {
+    id: 26,
+    name: "Colete",
+    priceSocio: 43.00,
+    priceNormal: 53.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_005554459.png",
+    description: "Colete de jogo, ideal para usar nos treinos e dia a dia",
+    sizes: ["Único"]
+  },
+  {
+    id: 27,
+    name: "Bucket",
+    priceSocio: 35.00,
+    priceNormal: 45.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_005904951.png",
+    description: "Bucket, ideal para usar no dia a dia e nas festas",
+    sizes: ["Único"]
+  },
+  {
+    id: 28,
+    name: "Meias",
+    priceSocio: 25.00,
+    priceNormal: 35.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_010805647.png",
+    description: "Meias, ideal para usar nos treinos e jogos",
+    sizes: ["Único"]
   }
 ];
 
@@ -309,7 +417,7 @@ export default function Loja() {
               MANGUESTORE
             </h1>
             <p className="text-neutral-400 text-sm md:text-base mt-2 max-w-lg">
-              Vista a armadura da Manguezal. Roupas e acessórios exclusivos para treinos, jogos e pro dia a dia.
+              Vista a armadura da Manguezal. Roupas e acessórios exclusivos para treinos, jogos, festas e pro dia a dia.
             </p>
           </div>
 
