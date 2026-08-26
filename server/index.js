@@ -1,11 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
+const { createClient } = require("@supabase/supabase-js");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// Configuração Supabase
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 const asaasAPI = axios.create({
   baseURL: process.env.ASAAS_API_URL || "https://sandbox.asaas.com/api/v3",
@@ -14,30 +18,78 @@ const asaasAPI = axios.create({
   },
 });
 
+// Helper: Sincroniza o cliente com o banco de dados (Supabase)
+async function syncAthleteToSupabase({ name, email, asaasId }) {
+  try {
+    // Verifica se já existe
+    const { data: existingAthlete } = await supabase
+      .from("athletes")
+      .select("id")
+      .eq("email", email)
+      .single();
+
+    if (!existingAthlete) {
+      await supabase.from("athletes").insert([{
+        name,
+        email,
+        asaas_customer_id: asaasId,
+        association_status: "pending"
+      }]);
+    } else {
+      await supabase.from("athletes").update({ asaas_customer_id: asaasId }).eq("id", existingAthlete.id);
+    }
+  } catch (err) {
+    console.error("Aviso: Erro ao sincronizar com Supabase:", err.message);
+  }
+}
+
 // Helper: Busca cliente existente pelo CPF ou cria um novo
 async function getOrCreateCustomer({ name, cpfCnpj, email, phone }) {
+  let customerId = null;
+  
   try {
     const search = await asaasAPI.get(`/customers?cpfCnpj=${cpfCnpj}`);
     if (search.data?.data?.length > 0) {
-      return search.data.data[0].id;
+      customerId = search.data.data[0].id;
     }
   } catch (err) {
     console.warn("Erro ao buscar cliente por CPF, tentando criar novo...");
   }
 
-  const customerResponse = await asaasAPI.post("/customers", {
-    name,
-    cpfCnpj,
-    email,
-    mobilePhone: phone,
-  });
+  if (!customerId) {
+    const customerResponse = await asaasAPI.post("/customers", {
+      name,
+      cpfCnpj,
+      email,
+      mobilePhone: phone,
+    });
+    customerId = customerResponse.data.id;
+  }
 
-  return customerResponse.data.id;
+  // Grava no banco de dados como pendente
+  await syncAthleteToSupabase({ name, email, asaasId: customerId });
+
+  return customerId;
 }
 
 // 1. Rota de teste
 app.get("/ping", (req, res) => {
   res.json({ message: "Servidor Manguezal rodando perfeitamente!" });
+});
+
+// NOVO: 1.5 Rota do Dashboard para a tela /direcao
+app.get("/api/dashboard", async (req, res) => {
+  try {
+    const { data: athletes, error: errAthletes } = await supabase.from("athletes").select("*");
+    const { data: payments, error: errPayments } = await supabase.from("payments").select("*").order("paid_at", { ascending: false });
+
+    if (errAthletes || errPayments) throw new Error("Erro nas tabelas do Supabase");
+
+    res.json({ athletes: athletes || [], payments: payments || [] });
+  } catch (error) {
+    console.error("Erro ao buscar dashboard:", error);
+    res.status(500).json({ error: "Erro ao buscar dados do dashboard" });
+  }
 });
 
 // 2. Rota PIX Avulso
@@ -154,20 +206,51 @@ app.post("/api/criar-assinatura", async (req, res) => {
   }
 });
 
-// 5. Webhook
-app.post("/webhook/asaas", (req, res) => {
+// 5. Webhook com Persistência
+app.post("/webhook/asaas", async (req, res) => {
   const evento = req.body;
   console.log("Notificação do Asaas recebida:", evento.event);
 
   if (evento.event === "PAYMENT_RECEIVED" || evento.event === "PAYMENT_CONFIRMED") {
     const pagamento = evento.payment;
-    console.log(`✅ Pagamento Aprovado! Valor: R$ ${pagamento.value} | ID: ${pagamento.id}`);
+    const asaasCustomerId = pagamento.customer;
+
+    try {
+      // 1. Atualiza status do atleta
+      await supabase
+        .from("athletes")
+        .update({ association_status: "active" })
+        .eq("asaas_customer_id", asaasCustomerId);
+
+      // 2. Busca o nome do atleta para salvar no histórico
+      const { data: athlete } = await supabase
+        .from("athletes")
+        .select("id, name")
+        .eq("asaas_customer_id", asaasCustomerId)
+        .single();
+
+      // 3. Salva o pagamento
+      await supabase.from("payments").insert([{
+        athlete_id: athlete?.id,
+        user_name: athlete?.name || "Desconhecido",
+        payment_type: pagamento.description && pagamento.description.includes("Avulso") ? "single_training" : "monthly", 
+        amount_cents: Math.round(pagamento.value * 100),
+        payment_method: pagamento.billingType.toLowerCase(),
+        status: "confirmed",
+        paid_at: new Date().toISOString().split("T")[0],
+        asaas_payment_id: pagamento.id
+      }]);
+
+      console.log(`✅ Pagamento Salvo no Banco! Valor: R$ ${pagamento.value}`);
+    } catch (dbError) {
+      console.error("Erro ao salvar webhook no banco:", dbError.message);
+    }
   }
 
   res.status(200).send("OK");
 });
 
-// Garantia: Qualquer rota desconhecida devolve JSON e não HTML 404
+// Garantia: Qualquer rota desconhecida devolve JSON
 app.use((req, res) => {
   res.status(404).json({ error: "Rota não encontrada no servidor." });
 });

@@ -8,57 +8,147 @@ const BACKEND_URL = "https://manguezal-backend.onrender.com";
 const PRODUCTS = [
   {
     id: 1,
-    name: "Camisa Oficial Manguezal 2026",
-    priceSocio: 79.90,
-    priceNormal: 89.90,
-    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80",
-    description: "Camisa dry-fit de alta performance com a estampa oficial da Atlética Manguezal. Tecido leve, respirável e secagem rápida.",
-    sizes: ["PP", "P", "M", "G", "GG"]
+    name: "Leque",
+    priceSocio: 35.00,
+    priceNormal: 45.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214316947.png",
+    description: "Leque oficial da Atlética Manguezal. Ideal para se refrescar nos treinos e jogos da maior Atlética de Pernambuco.",
+    sizes: ["Único"]
   },
   {
     id: 2,
-    name: "Regata Cavada de Treino",
-    priceSocio: 49.90,
-    priceNormal: 59.90,
-    image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80",
-    description: "Ideal para treinos intensos. Corte nadador com cava ampla para máxima liberdade de movimento nas partidas.",
-    sizes: ["P", "M", "G", "GG"]
+    name: "Jersey Baseball",
+    priceSocio: 150.00,
+    priceNormal: 165.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214233725.png",
+    description: "Jersey de baseball oficial da Manguezal e a mais bonita do Brasil ",
+    sizes: ["XP", "PP", "P", "M", "G", "GG", "XG"]
   },
   {
     id: 3,
-    name: "Mochila Bag Manguezal Sports",
-    priceSocio: 109.90,
-    priceNormal: 129.90,
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80",
-    description: "Compartimento exclusivo para tênis e roupas molhadas. Perfeita para carregar seu kit de treino da atlética.",
-    sizes: ["Único"]
+    name: "Jersey Retrô",
+    priceSocio: 130.00,
+    priceNormal: 145.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214127066.png",
+    description: "Jersey retrô oficial da Manguezal, com gola polo, Ideal para usar em qualquer ocasião.",
+    sizes: ["XP", "PP", "P", "M", "G", "GG", "XG"]
   },
   {
     id: 4,
-    name: "Boné Trucker Laranja & Preto",
+    name: "Caneca Bicampeão + Tirante Bicampeão",
     priceSocio: 35.00,
     priceNormal: 45.00,
-    image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&auto=format&fit=crop&q=80",
-    description: "Boné estilo trucker com bordado em alto relevo da Manguezal. Ajuste snapback traseiro.",
-    sizes: ["Único"]
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_213804604.png",
+    description: "Caneca Bicampeão + Tirante Bicampeão Laranja ou LGBT.",
+    sizes: ["Tirante Laranja", "Tirante LGBT"]
   },
   {
     id: 5,
-    name: "Garrafa Térmica Inox 1L",
-    priceSocio: 59.90,
-    priceNormal: 69.90,
-    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80",
-    description: "Conserva gelado por até 24h. Ideal para levar pros treinos sob o sol de Pernambuco.",
+    name: "Tirante Bicampeão Laranja",
+    priceSocio: 6.00,
+    priceNormal: 12.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214419867.png",
+    description: "Tirante Bicampeão Laranja e Preto, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
     sizes: ["Único"]
   },
   {
     id: 6,
-    name: "Moletom Canguru Manguezal",
-    priceSocio: 159.90,
-    priceNormal: 179.90,
-    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80",
-    description: "Moletom flanelado super confortável, bolso frontal e capuz forrado com estampa exclusiva.",
-    sizes: ["P", "M", "G", "GG", "XG"]
+    name: "Tirante Bicampeão LGBT",
+    priceSocio: 6.00,
+    priceNormal: 12.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214623061.png",
+    description: "Tirante Bicampeão LGBT, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
+    sizes: ["Único"]
+  },
+  {
+    id: 7,
+    name: "Caneca 360 + Tirante Comum",
+    priceSocio: 35.00,
+    priceNormal: 45.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214921660.png",
+    description: "Caneca 360 + Tirante Comum, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
+    sizes: ["Comum Laranja", "ComumLGBT"]
+  },
+  {
+    id: 8,
+    name: "Caneca 360",
+    priceSocio: 30.00,
+    priceNormal: 35.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215656848.png",
+    description: "Caneca 360, ideal para tomar a pororoca.",
+    sizes: ["Único"]
+  },
+  {
+    id: 9,
+    name: "Tirante Comum Laranja",
+    priceSocio: 6.00,
+    priceNormal: 12.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215523572.png",
+    description: "Tirante Comum Laranja, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
+    sizes: ["Único"]
+  },
+  {
+    id: 10,
+    name: "Tirante Comum LGBT",
+    priceSocio: 6.00,
+    priceNormal: 12.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215807414.png",
+    description: "Tirante Comum LGBT, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
+    sizes: ["Único"]
+  },
+  {
+    id: 11,
+    name: "Camisa Oversized Bicampeão",
+    priceSocio: 55.00,
+    priceNormal: 65.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220419016.png",
+    description: "Camisa Oversized Bicampeão, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 12,
+    name: "Camisa Passeio Preta",
+    priceSocio: 50.00,
+    priceNormal: 65.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220608883.png",
+    description: "Camisa Passeio Preta, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 13,
+    name: "Camisa Passeio Branca",
+    priceSocio: 50.00,
+    priceNormal: 65.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220727589.png",
+    description: "Camisa Passeio Branca, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 14,
+    name: "Cropped Preto",
+    priceSocio: 40.00,
+    priceNormal: 55.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221148491.png",
+    description: "Cropped Preto, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 15,
+    name: "Cropped Branca",
+    priceSocio: 40.00,
+    priceNormal: 55.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221504554.png",
+    description: "Cropped Branca, ideal para usar no dia a dia e nas festas",
+    sizes: ["PP", "P", "M", "G", "GG", "XG"]
+  },
+  {
+    id: 16,
+    name: "Bandana Retrô",
+    priceSocio: 35.00,
+    priceNormal: 45.00,
+    image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221940802.png",
+    description: "Bandana Retrô, ideal para usar no dia a dia e nas festas",
+    sizes: ["Único"]
   }
 ];
 

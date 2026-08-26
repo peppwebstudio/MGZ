@@ -31,21 +31,23 @@ const PLAN_LABELS = { single_training: "Treino avulso", monthly: "Mensal", bimon
 const PAY_LABELS = { pix: "Pix", credit_card: "Cartão", cash: "Dinheiro", transfer: "Transferência", other: "Outro" };
 const PAY_STATUS = { awaiting: "Aguardando", confirmed: "Pago", refused: "Recusado", cancelled: "Cancelado", expired: "Expirado", refunded: "Estornado" };
 
-// Dados simulados de atletas
+// Dados simulados de atletas (Ajustado com os usuários faltantes e IDs consistentes)
 const MOCK_ATHLETES = [
   { id: 1, name: "Carlos Silva", email: "carlos@email.com", association_status: "active", expires_at: "2026-12-31" },
   { id: 2, name: "Ana Souza", email: "ana@email.com", association_status: "active", expires_at: "2026-10-15" },
   { id: 3, name: "Lucas Ferreira", email: "lucas@email.com", association_status: "pending", expires_at: "2026-08-30" },
   { id: 4, name: "Roberto Alves", email: "roberto@email.com", association_status: "inactive", inactive_at: "2026-02-10" },
+  { id: 5, name: "João Pedro", email: "joao@email.com", association_status: "active", expires_at: "2026-09-15" },
+  { id: 6, name: "Mariana Costa", email: "mariana@email.com", association_status: "inactive", inactive_at: "2026-08-22" }, // Treino avulso geralmente não é membro ativo contínuo
 ];
 
-// Dados simulados de pagamentos
+// Dados simulados de pagamentos (Ajustado incluindo referência athlete_id para conectar com MOCK_ATHLETES)
 const MOCK_PAYMENTS = [
-  { id: "1", user_name: "Carlos Silva", payment_type: "quarterly", amount_cents: 19000, payment_method: "pix", status: "confirmed", paid_at: "2026-08-20" },
-  { id: "2", user_name: "Ana Souza", payment_type: "bimonthly", amount_cents: 14000, payment_method: "credit_card", status: "confirmed", paid_at: "2026-08-18" },
-  { id: "3", user_name: "João Pedro", payment_type: "monthly", amount_cents: 7000, payment_method: "pix", status: "confirmed", paid_at: "2026-08-15" },
-  { id: "4", user_name: "Mariana Costa", payment_type: "single_training", amount_cents: 1800, payment_method: "pix", status: "confirmed", paid_at: "2026-08-22" },
-  { id: "5", user_name: "Lucas Ferreira", payment_type: "quarterly", amount_cents: 19000, payment_method: "pix", status: "awaiting", paid_at: "2026-08-24" },
+  { id: "1", athlete_id: 1, user_name: "Carlos Silva", payment_type: "quarterly", amount_cents: 19000, payment_method: "pix", status: "confirmed", paid_at: "2026-08-20" },
+  { id: "2", athlete_id: 2, user_name: "Ana Souza", payment_type: "bimonthly", amount_cents: 14000, payment_method: "credit_card", status: "confirmed", paid_at: "2026-08-18" },
+  { id: "3", athlete_id: 5, user_name: "João Pedro", payment_type: "monthly", amount_cents: 7000, payment_method: "pix", status: "confirmed", paid_at: "2026-08-15" },
+  { id: "4", athlete_id: 6, user_name: "Mariana Costa", payment_type: "single_training", amount_cents: 1800, payment_method: "pix", status: "confirmed", paid_at: "2026-08-22" },
+  { id: "5", athlete_id: 3, user_name: "Lucas Ferreira", payment_type: "quarterly", amount_cents: 19000, payment_method: "pix", status: "awaiting", paid_at: "2026-08-24" },
 ];
 
 // Dados simulados da Lojinha (Produtos e Compradores)
