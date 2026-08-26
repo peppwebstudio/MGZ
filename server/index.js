@@ -61,7 +61,7 @@ async function getOrCreateCustomer({ name, cpfCnpj, email, phone }) {
       name,
       cpfCnpj,
       email,
-      mobilePhone: phone,
+      mobilePhone: phone || "",
     });
     customerId = customerResponse.data.id;
   }
@@ -77,7 +77,7 @@ app.get("/ping", (req, res) => {
   res.json({ message: "Servidor Manguezal rodando perfeitamente!" });
 });
 
-// NOVO: 1.5 Rota do Dashboard para a tela /direcao
+// 1.5 Rota do Dashboard para a tela /direcao
 app.get("/api/dashboard", async (req, res) => {
   try {
     const { data: athletes, error: errAthletes } = await supabase.from("athletes").select("*");
@@ -206,7 +206,98 @@ app.post("/api/criar-assinatura", async (req, res) => {
   }
 });
 
-// 5. Webhook com Persistência
+// ==========================================
+// 5. NOVA ROTA: Checkout da Lojinha
+// ==========================================
+app.post("/api/checkout-loja", async (req, res) => {
+  try {
+    const { 
+      customer, 
+      paymentMethod, 
+      cardData, 
+      cartItems, 
+      hasSocioItems, 
+      totalValue, 
+      description 
+    } = req.body;
+
+    console.log(`Recebendo pedido da lojinha: ${customer.name}, Turma: ${customer.turma}, Valor: R$ ${totalValue}`);
+
+    // Validação de Sócio (busca no Supabase pelo email)
+    if (hasSocioItems) {
+      const { data: athlete } = await supabase
+        .from("athletes")
+        .select("association_status")
+        .eq("email", customer.email)
+        .single();
+
+      if (!athlete || athlete.association_status !== "active") {
+        return res.status(400).json({ 
+          isSocioError: true, 
+          error: "O e-mail informado não consta como sócio ativo na nossa base. Use o mesmo e-mail do seu cadastro." 
+        });
+      }
+    }
+
+    // Cria ou busca o cliente no Asaas
+    const customerId = await getOrCreateCustomer({ 
+      name: customer.name, 
+      cpfCnpj: customer.cpfCnpj, 
+      email: customer.email, 
+      phone: "" // Telefone não é obrigatório no form da loja
+    });
+
+    const today = new Date().toISOString().split("T")[0];
+
+    // Processamento via PIX
+    if (paymentMethod === "pix") {
+      const paymentResponse = await asaasAPI.post("/payments", {
+        customer: customerId,
+        billingType: "PIX",
+        value: totalValue,
+        dueDate: today,
+        description: description,
+      });
+
+      const paymentId = paymentResponse.data.id;
+      const pixResponse = await asaasAPI.get(`/payments/${paymentId}/pixQrCode`);
+
+      return res.json({
+        paymentId,
+        encodedImage: pixResponse.data.encodedImage,
+        payload: pixResponse.data.payload,
+      });
+
+    // Processamento via Cartão de Crédito
+    } else if (paymentMethod === "credit_card") {
+      const paymentResponse = await asaasAPI.post("/payments", {
+        customer: customerId,
+        billingType: "CREDIT_CARD",
+        value: totalValue,
+        dueDate: today,
+        description: description,
+        creditCard: cardData?.creditCard, 
+        creditCardHolderInfo: cardData?.creditCardHolderInfo
+      });
+
+      return res.json({ 
+        success: true, 
+        paymentId: paymentResponse.data.id,
+        message: "Pagamento aprovado com sucesso!" 
+      });
+    } else {
+      return res.status(400).json({ error: "Método de pagamento inválido." });
+    }
+
+  } catch (error) {
+    console.error("Erro na rota /api/checkout-loja:", error.response?.data || error.message);
+    return res.status(500).json({ 
+      error: error.response?.data?.errors?.[0]?.description || "Erro interno no servidor ao processar o pagamento." 
+    });
+  }
+});
+
+// 6. Webhook com Persistência
 app.post("/webhook/asaas", async (req, res) => {
   const evento = req.body;
   console.log("Notificação do Asaas recebida:", evento.event);
