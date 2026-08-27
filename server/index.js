@@ -74,7 +74,7 @@ async function getOrCreateCustomer({ name, cpfCnpj, email, phone }) {
 
 // 1. Rota de teste
 app.get("/ping", (req, res) => {
-  res.json({ message: "Servidor Manguezal rodando perfeitamente!" });
+  res.json({ message: "Servidor Manguezal V2 com Lojinha!" });
 });
 
 // 1.5 Rota do Dashboard para a tela /direcao
