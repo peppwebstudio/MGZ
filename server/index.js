@@ -23,25 +23,41 @@ const asaasAPI = axios.create({
 // Helper: Sincroniza o cliente com o banco de dados (Supabase)
 async function syncAthleteToSupabase({ name, email, asaasId }) {
   try {
-    // Verifica se já existe
-    const { data: existingAthlete } = await supabase
+    // Verifica se já existe usando maybeSingle() para evitar erro 406 se não existir
+    const { data: existingAthlete, error: fetchErr } = await supabase
       .from("athletes")
       .select("id")
       .eq("email", email)
-      .single();
+      .maybeSingle();
+
+    if (fetchErr) {
+      console.error("Aviso: Erro ao verificar atleta existente:", fetchErr.message);
+      return;
+    }
 
     if (!existingAthlete) {
-      await supabase.from("athletes").insert([{
+      const { error: insertErr } = await supabase.from("athletes").insert([{
         name,
         email,
         asaas_customer_id: asaasId,
         association_status: "pending"
       }]);
+      
+      if (insertErr) {
+        console.error("Aviso: Erro ao inserir atleta no Supabase:", insertErr.message);
+      }
     } else {
-      await supabase.from("athletes").update({ asaas_customer_id: asaasId }).eq("id", existingAthlete.id);
+      const { error: updateErr } = await supabase
+        .from("athletes")
+        .update({ asaas_customer_id: asaasId })
+        .eq("id", existingAthlete.id);
+        
+      if (updateErr) {
+        console.error("Aviso: Erro ao atualizar atleta no Supabase:", updateErr.message);
+      }
     }
   } catch (err) {
-    console.error("Aviso: Erro ao sincronizar com Supabase:", err.message);
+    console.error("Aviso: Erro inesperado ao sincronizar com Supabase:", err.message);
   }
 }
 
@@ -227,11 +243,16 @@ app.post("/api/checkout-loja", async (req, res) => {
 
     // Validação de Sócio (busca no Supabase pelo email)
     if (hasSocioItems) {
-      const { data: athlete } = await supabase
+      // maybeSingle() evita o erro caso o e-mail não exista na base
+      const { data: athlete, error: socioErr } = await supabase
         .from("athletes")
         .select("association_status")
         .eq("email", customer.email)
-        .single();
+        .maybeSingle();
+
+      if (socioErr) {
+        console.error("Erro ao consultar status de sócio no Supabase:", socioErr.message);
+      }
 
       if (!athlete || athlete.association_status !== "active") {
         return res.status(400).json({ 
@@ -310,21 +331,25 @@ app.post("/webhook/asaas", async (req, res) => {
 
     try {
       // 1. Atualiza status do atleta
-      await supabase
+      const { error: updateErr } = await supabase
         .from("athletes")
         .update({ association_status: "active" })
         .eq("asaas_customer_id", asaasCustomerId);
+        
+      if (updateErr) console.error("Erro ao atualizar status do atleta (Webhook):", updateErr.message);
 
-      // 2. Busca o nome do atleta para salvar no histórico
-      const { data: athlete } = await supabase
+      // 2. Busca o nome do atleta para salvar no histórico usando maybeSingle()
+      const { data: athlete, error: athleteErr } = await supabase
         .from("athletes")
         .select("id, name")
         .eq("asaas_customer_id", asaasCustomerId)
-        .single();
+        .maybeSingle();
+
+      if (athleteErr) console.error("Erro ao buscar atleta (Webhook):", athleteErr.message);
 
       // 3. Salva o pagamento
-      await supabase.from("payments").insert([{
-        athlete_id: athlete?.id,
+      const { error: paymentErr } = await supabase.from("payments").insert([{
+        athlete_id: athlete?.id || null, // Permite null se por acaso não encontrar o atleta
         user_name: athlete?.name || "Desconhecido",
         payment_type: pagamento.description && pagamento.description.includes("Avulso") ? "single_training" : "monthly", 
         amount_cents: Math.round(pagamento.value * 100),
@@ -333,10 +358,14 @@ app.post("/webhook/asaas", async (req, res) => {
         paid_at: new Date().toISOString().split("T")[0],
         asaas_payment_id: pagamento.id
       }]);
-
-      console.log(`✅ Pagamento Salvo no Banco! Valor: R$ ${pagamento.value}`);
+      
+      if (paymentErr) {
+        console.error("Erro ao salvar histórico de pagamento (Webhook):", paymentErr.message);
+      } else {
+        console.log(`✅ Pagamento Salvo no Banco! Valor: R$ ${pagamento.value}`);
+      }
     } catch (dbError) {
-      console.error("Erro ao salvar webhook no banco:", dbError.message);
+      console.error("Erro ao processar webhook no banco:", dbError.message);
     }
   }
 
