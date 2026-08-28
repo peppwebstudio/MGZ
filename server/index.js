@@ -8,8 +8,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Configuração Supabase
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+// Configuração Supabase - Forçando a conexão para ignorar o Render
+const supabaseUrl = "https://lozwywqilfwpeblhexwn.supabase.co";
+const supabaseKey = "sb_publishable_gASzFHrrR6bjdgq11oiUUw_vEZs67is";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const asaasAPI = axios.create({
   baseURL: process.env.ASAAS_API_URL || "https://sandbox.asaas.com/api/v3",
