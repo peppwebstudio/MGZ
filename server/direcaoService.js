@@ -1,5 +1,5 @@
 // Altere para a URL do seu servidor hospedado no Render quando publicar em produção
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://manguezal-backend.onrender.com";
 
 /**
  * Busca a lista de atletas/sócios reais salvos no Supabase via backend Express
