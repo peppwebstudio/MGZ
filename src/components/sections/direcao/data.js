@@ -76,32 +76,3 @@ export const parseAsaasPaymentMethod = (method) => {
       return "other";
   }
 };
-
-// Array de vendas mockado para o dashboard, puxando a imagem real do produto pelo ID
-export const MOCK_STORE_PRODUCTS = [
-  {
-    id: 1, // Leque
-    name: "Leque",
-    image: getProductImage(1),
-    unit_price_cents: 4500,
-    buyers: [
-      { id: "b1", name: "Carlos Silva", is_member: true, size: "Único", quantity: 1, total_cents: 3500, date: "2026-08-20", payment_method: "pix" }
-    ],
-  },
-  {
-    id: 11, // Camisa Oversized Bicampeão
-    name: "Camisa Oversized Bicampeão",
-    image: getProductImage(11),
-    unit_price_cents: 6500,
-    buyers: [
-      { id: "b2", name: "Ana Souza", is_member: false, size: "M", quantity: 1, total_cents: 6500, date: "2026-08-18", payment_method: "credit_card" }
-    ],
-  },
-  {
-    id: 4, // Caneca
-    name: "Caneca Bicampeão + Tirante",
-    image: getProductImage(4),
-    unit_price_cents: 4500,
-    buyers: [],
-  }
-];
