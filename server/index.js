@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Configuração Supabase - Forçando a conexão para ignorar o Render
+// Configuração Supabase
 const supabaseUrl = "https://lozwywqilfwpeblhexwn.supabase.co";
 const supabaseKey = "sb_publishable_gASzFHrrR6bjdgq11oiUUw_vEZs67is";
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -20,10 +20,11 @@ const asaasAPI = axios.create({
   },
 });
 
-// Helper: Sincroniza o cliente com o banco de dados (Supabase)
-async function syncAthleteToSupabase({ name, email, asaasId }) {
+// Helper: Sincroniza o cliente com o banco de dados (Supabase), incluindo CPF
+async function syncAthleteToSupabase({ name, email, cpf, asaasId }) {
   try {
-    // Verifica se já existe usando maybeSingle() para evitar erro 406 se não existir
+    const cleanCpf = cpf ? cpf.replace(/\D/g, "") : null;
+
     const { data: existingAthlete, error: fetchErr } = await supabase
       .from("athletes")
       .select("id")
@@ -39,6 +40,7 @@ async function syncAthleteToSupabase({ name, email, asaasId }) {
       const { error: insertErr } = await supabase.from("athletes").insert([{
         name,
         email,
+        cpf: cleanCpf,
         asaas_customer_id: asaasId,
         association_status: "pending"
       }]);
@@ -49,7 +51,10 @@ async function syncAthleteToSupabase({ name, email, asaasId }) {
     } else {
       const { error: updateErr } = await supabase
         .from("athletes")
-        .update({ asaas_customer_id: asaasId })
+        .update({ 
+          asaas_customer_id: asaasId,
+          ...(cleanCpf && { cpf: cleanCpf })
+        })
         .eq("id", existingAthlete.id);
         
       if (updateErr) {
@@ -64,9 +69,10 @@ async function syncAthleteToSupabase({ name, email, asaasId }) {
 // Helper: Busca cliente existente pelo CPF ou cria um novo
 async function getOrCreateCustomer({ name, cpfCnpj, email, phone }) {
   let customerId = null;
+  const cleanCpf = cpfCnpj ? cpfCnpj.replace(/\D/g, "") : "";
   
   try {
-    const search = await asaasAPI.get(`/customers?cpfCnpj=${cpfCnpj}`);
+    const search = await asaasAPI.get(`/customers?cpfCnpj=${cleanCpf}`);
     if (search.data?.data?.length > 0) {
       customerId = search.data.data[0].id;
     }
@@ -77,7 +83,7 @@ async function getOrCreateCustomer({ name, cpfCnpj, email, phone }) {
   if (!customerId) {
     const customerResponse = await asaasAPI.post("/customers", {
       name,
-      cpfCnpj,
+      cpfCnpj: cleanCpf,
       email,
       mobilePhone: phone || "",
     });
@@ -85,7 +91,7 @@ async function getOrCreateCustomer({ name, cpfCnpj, email, phone }) {
   }
 
   // Grava no banco de dados como pendente
-  await syncAthleteToSupabase({ name, email, asaasId: customerId });
+  await syncAthleteToSupabase({ name, email, cpf: cleanCpf, asaasId: customerId });
 
   return customerId;
 }
@@ -95,15 +101,20 @@ app.get("/ping", (req, res) => {
   res.json({ message: "Servidor Manguezal V2 com Lojinha!" });
 });
 
-// 1.5 Rota do Dashboard para a tela /direcao
+// 1.5 Rota do Dashboard para a tela /direcao (Atletas, Pagamentos e Pedidos da Loja)
 app.get("/api/dashboard", async (req, res) => {
   try {
     const { data: athletes, error: errAthletes } = await supabase.from("athletes").select("*");
     const { data: payments, error: errPayments } = await supabase.from("payments").select("*").order("paid_at", { ascending: false });
+    const { data: storeOrders, error: errOrders } = await supabase.from("store_orders").select("*, store_order_items(*)").order("created_at", { ascending: false });
 
-    if (errAthletes || errPayments) throw new Error("Erro nas tabelas do Supabase");
+    if (errAthletes || errPayments || errOrders) throw new Error("Erro nas tabelas do Supabase");
 
-    res.json({ athletes: athletes || [], payments: payments || [] });
+    res.json({ 
+      athletes: athletes || [], 
+      payments: payments || [],
+      storeOrders: storeOrders || []
+    });
   } catch (error) {
     console.error("Erro ao buscar dashboard:", error);
     res.status(500).json({ error: "Erro ao buscar dados do dashboard" });
@@ -225,7 +236,7 @@ app.post("/api/criar-assinatura", async (req, res) => {
 });
 
 // ==========================================
-// 5. NOVA ROTA: Checkout da Lojinha
+// 5. Checkout da Lojinha com Validação de CPF e Registro no Supabase
 // ==========================================
 app.post("/api/checkout-loja", async (req, res) => {
   try {
@@ -233,31 +244,42 @@ app.post("/api/checkout-loja", async (req, res) => {
       customer, 
       paymentMethod, 
       cardData, 
-      cartItems, 
+      cartItems = [], 
       hasSocioItems, 
       totalValue, 
       description 
     } = req.body;
 
-    console.log(`Recebendo pedido da lojinha: ${customer.name}, Turma: ${customer.turma}, Valor: R$ ${totalValue}`);
+    const cleanCpf = customer.cpfCnpj ? customer.cpfCnpj.replace(/\D/g, "") : "";
 
-    // Validação de Sócio (busca no Supabase pelo email)
+    console.log(`Recebendo pedido da lojinha: ${customer.name}, CPF: ${cleanCpf}, Valor: R$ ${totalValue}`);
+
+    // Validação de Sócio por CPF (procura na base pelo CPF ou pelo Email)
     if (hasSocioItems) {
-      // maybeSingle() evita o erro caso o e-mail não exista na base
-      const { data: athlete, error: socioErr } = await supabase
-        .from("athletes")
-        .select("association_status")
-        .eq("email", customer.email)
-        .maybeSingle();
+      let athlete = null;
 
-      if (socioErr) {
-        console.error("Erro ao consultar status de sócio no Supabase:", socioErr.message);
+      if (cleanCpf) {
+        const { data: athleteByCpf } = await supabase
+          .from("athletes")
+          .select("association_status")
+          .eq("cpf", cleanCpf)
+          .maybeSingle();
+        athlete = athleteByCpf;
+      }
+
+      if (!athlete && customer.email) {
+        const { data: athleteByEmail } = await supabase
+          .from("athletes")
+          .select("association_status")
+          .eq("email", customer.email)
+          .maybeSingle();
+        athlete = athleteByEmail;
       }
 
       if (!athlete || athlete.association_status !== "active") {
         return res.status(400).json({ 
           isSocioError: true, 
-          error: "O e-mail informado não consta como sócio ativo na nossa base. Use o mesmo e-mail do seu cadastro." 
+          error: "O CPF/E-mail informado não consta como sócio ativo na nossa base. regularize sua situação ou entre em contato." 
         });
       }
     }
@@ -265,12 +287,15 @@ app.post("/api/checkout-loja", async (req, res) => {
     // Cria ou busca o cliente no Asaas
     const customerId = await getOrCreateCustomer({ 
       name: customer.name, 
-      cpfCnpj: customer.cpfCnpj, 
+      cpfCnpj: cleanCpf, 
       email: customer.email, 
-      phone: "" // Telefone não é obrigatório no form da loja
+      phone: ""
     });
 
     const today = new Date().toISOString().split("T")[0];
+    let paymentId = null;
+    let pixData = null;
+    let initialStatus = "pending";
 
     // Processamento via PIX
     if (paymentMethod === "pix") {
@@ -282,14 +307,9 @@ app.post("/api/checkout-loja", async (req, res) => {
         description: description,
       });
 
-      const paymentId = paymentResponse.data.id;
+      paymentId = paymentResponse.data.id;
       const pixResponse = await asaasAPI.get(`/payments/${paymentId}/pixQrCode`);
-
-      return res.json({
-        paymentId,
-        encodedImage: pixResponse.data.encodedImage,
-        payload: pixResponse.data.payload,
-      });
+      pixData = pixResponse.data;
 
     // Processamento via Cartão de Crédito
     } else if (paymentMethod === "credit_card") {
@@ -303,13 +323,59 @@ app.post("/api/checkout-loja", async (req, res) => {
         creditCardHolderInfo: cardData?.creditCardHolderInfo
       });
 
-      return res.json({ 
-        success: true, 
-        paymentId: paymentResponse.data.id,
-        message: "Pagamento aprovado com sucesso!" 
-      });
+      paymentId = paymentResponse.data.id;
+      if (paymentResponse.data.status === "CONFIRMED" || paymentResponse.data.status === "RECEIVED") {
+        initialStatus = "confirmed";
+      }
     } else {
       return res.status(400).json({ error: "Método de pagamento inválido." });
+    }
+
+    // Grava o pedido na tabela store_orders do Supabase
+    const { data: orderData, error: orderErr } = await supabase
+      .from("store_orders")
+      .insert([{
+        customer_name: customer.name,
+        customer_cpf: cleanCpf,
+        customer_email: customer.email,
+        total_cents: Math.round(totalValue * 100),
+        payment_method: paymentMethod,
+        status: initialStatus,
+        asaas_payment_id: paymentId
+      }])
+      .select("id")
+      .single();
+
+    if (orderErr) {
+      console.error("Erro ao gravar pedido na loja (Supabase):", orderErr.message);
+    } else if (orderData && cartItems.length > 0) {
+      // Grava os itens do pedido com detalhes (tamanho, preço e modalidade)
+      const orderItemsToInsert = cartItems.map((item) => ({
+        order_id: orderData.id,
+        product_id: item.id || null,
+        product_name: item.name || "Produto",
+        quantity: item.quantity || 1,
+        size: item.size || "Único",
+        unit_price_cents: Math.round((item.price || 0) * 100),
+        price_type: item.isSocioPrice ? "socio" : "geral"
+      }));
+
+      const { error: itemsErr } = await supabase.from("store_order_items").insert(orderItemsToInsert);
+      if (itemsErr) console.error("Erro ao gravar itens do pedido (Supabase):", itemsErr.message);
+    }
+
+    if (paymentMethod === "pix") {
+      return res.json({
+        paymentId,
+        encodedImage: pixData.encodedImage,
+        payload: pixData.payload,
+      });
+    } else {
+      return res.json({ 
+        success: true, 
+        paymentId,
+        message: "Pagamento aprovado com sucesso!" 
+      });
     }
 
   } catch (error) {
@@ -330,7 +396,15 @@ app.post("/webhook/asaas", async (req, res) => {
     const asaasCustomerId = pagamento.customer;
 
     try {
-      // 1. Atualiza status do atleta
+      // 1. Atualiza compras da lojinha vinculadas a este pagamento
+      const { error: storeErr } = await supabase
+        .from("store_orders")
+        .update({ status: "confirmed" })
+        .eq("asaas_payment_id", pagamento.id);
+
+      if (storeErr) console.error("Aviso ao atualizar pedido da loja no webhook:", storeErr.message);
+
+      // 2. Atualiza status do atleta (Assinatura / Plano)
       const { error: updateErr } = await supabase
         .from("athletes")
         .update({ association_status: "active" })
@@ -338,7 +412,7 @@ app.post("/webhook/asaas", async (req, res) => {
         
       if (updateErr) console.error("Erro ao atualizar status do atleta (Webhook):", updateErr.message);
 
-      // 2. Busca o nome do atleta para salvar no histórico usando maybeSingle()
+      // 3. Busca o nome do atleta para salvar no histórico de mensalidades
       const { data: athlete, error: athleteErr } = await supabase
         .from("athletes")
         .select("id, name")
@@ -347,9 +421,9 @@ app.post("/webhook/asaas", async (req, res) => {
 
       if (athleteErr) console.error("Erro ao buscar atleta (Webhook):", athleteErr.message);
 
-      // 3. Salva o pagamento
+      // 4. Salva o pagamento de mensalidade/avulso
       const { error: paymentErr } = await supabase.from("payments").insert([{
-        athlete_id: athlete?.id || null, // Permite null se por acaso não encontrar o atleta
+        athlete_id: athlete?.id || null,
         user_name: athlete?.name || "Desconhecido",
         payment_type: pagamento.description && pagamento.description.includes("Avulso") ? "single_training" : "monthly", 
         amount_cents: Math.round(pagamento.value * 100),

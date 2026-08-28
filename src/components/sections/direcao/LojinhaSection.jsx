@@ -1,13 +1,17 @@
 import { ShoppingBag, Tag, Package, ShoppingCart, Eye } from "lucide-react";
 import { formatBRL } from "./data";
 
-export default function LojinhaSection({ storeProducts, onOpenModal }) {
+export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
+  // Cálculo do faturamento total considerando apenas dados reais do banco
   const storeTotalRevenue = storeProducts.reduce((acc, product) => {
-    return acc + product.buyers.reduce((bAcc, buyer) => bAcc + buyer.total_cents, 0);
+    const buyers = product.buyers || [];
+    return acc + buyers.reduce((bAcc, buyer) => bAcc + (buyer.total_cents || 0), 0);
   }, 0);
 
+  // Cálculo total de unidades vendidas
   const storeTotalItemsSold = storeProducts.reduce((acc, product) => {
-    return acc + product.buyers.reduce((bAcc, buyer) => bAcc + buyer.quantity, 0);
+    const buyers = product.buyers || [];
+    return acc + buyers.reduce((bAcc, buyer) => bAcc + (buyer.quantity || 0), 0);
   }, 0);
 
   return (
@@ -63,14 +67,15 @@ export default function LojinhaSection({ storeProducts, onOpenModal }) {
                 </tr>
               )}
               {storeProducts.map((product) => {
-                const productQty = product.buyers.reduce((acc, b) => acc + b.quantity, 0);
-                const productRevenue = product.buyers.reduce((acc, b) => acc + b.total_cents, 0);
+                const buyers = product.buyers || [];
+                const productQty = buyers.reduce((acc, b) => acc + (b.quantity || 0), 0);
+                const productRevenue = buyers.reduce((acc, b) => acc + (b.total_cents || 0), 0);
 
                 return (
                   <tr
                     key={product.id}
                     className="border-b border-neutral-800/60 last:border-0 hover:bg-neutral-800/30 transition-colors group cursor-pointer"
-                    onClick={() => onOpenModal("store_buyers", product)}
+                    onClick={() => onOpenModal && onOpenModal("store_buyers", product)}
                   >
                     <td className="py-3">
                       <div className="flex items-center gap-3">
@@ -84,7 +89,7 @@ export default function LojinhaSection({ storeProducts, onOpenModal }) {
                             {product.name}
                           </p>
                           <p className="text-xs text-neutral-400">
-                            Preço Un.: {formatBRL(product.unit_price_cents)}
+                            Preço Un.: {formatBRL(product.unit_price_cents || 0)}
                           </p>
                         </div>
                       </div>
@@ -101,7 +106,7 @@ export default function LojinhaSection({ storeProducts, onOpenModal }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onOpenModal("store_buyers", product);
+                          if (onOpenModal) onOpenModal("store_buyers", product);
                         }}
                         className="inline-flex items-center gap-1.5 bg-neutral-800 hover:bg-[#ea580c] text-neutral-300 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-neutral-700 transition-all"
                       >
