@@ -38,7 +38,7 @@ export default function CheckoutModal({
   // Numero do WhatsApp para suporte (Substitua pelo número real da atlética)
   const whatsappNumber = "555491752170"; 
   const whatsappMessage = encodeURIComponent(
-    `Oi, Guto! estou tendo problemas com a compra na lojinha relacionada ao meu plano de sócio atleta. Meu CPF é o ${customer.cpf || "..."}. Pode me ajudar?`
+    `Oi, Guto! estou tendo problemas com a compra na lojinha relacionada ao meu plano de sócio atleta. Pode me ajudar?`
   );
 
   return (
