@@ -1,5 +1,5 @@
 import { ShoppingBag, Tag, Package, ShoppingCart, Eye } from "lucide-react";
-import { formatBRL } from "./data";
+import { formatBRL } from "./data"; // Certifique-se de que o caminho está correto
 
 export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
   // Cálculo do faturamento total considerando apenas dados reais do banco
@@ -59,63 +59,67 @@ export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
               </tr>
             </thead>
             <tbody>
-              {storeProducts.length === 0 && (
+              {storeProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-4 text-center text-neutral-500">
-                    Nenhum produto registrado na lojinha
+                  <td colSpan={4} className="py-8 text-center text-neutral-500">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <ShoppingBag className="w-8 h-8 text-neutral-700" />
+                      <p>Nenhuma venda registrada na lojinha ainda.</p>
+                    </div>
                   </td>
                 </tr>
-              )}
-              {storeProducts.map((product) => {
-                const buyers = product.buyers || [];
-                const productQty = buyers.reduce((acc, b) => acc + (b.quantity || 0), 0);
-                const productRevenue = buyers.reduce((acc, b) => acc + (b.total_cents || 0), 0);
+              ) : (
+                storeProducts.map((product) => {
+                  const buyers = product.buyers || [];
+                  const productQty = buyers.reduce((acc, b) => acc + (b.quantity || 0), 0);
+                  const productRevenue = buyers.reduce((acc, b) => acc + (b.total_cents || 0), 0);
 
-                return (
-                  <tr
-                    key={product.id}
-                    className="border-b border-neutral-800/60 last:border-0 hover:bg-neutral-800/30 transition-colors group cursor-pointer"
-                    onClick={() => onOpenModal && onOpenModal("store_buyers", product)}
-                  >
-                    <td className="py-3">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-11 h-11 rounded-lg object-cover bg-neutral-950 border border-neutral-800 shrink-0"
-                        />
-                        <div>
-                          <p className="font-semibold text-white group-hover:text-[#ea580c] transition-colors">
-                            {product.name}
-                          </p>
-                          <p className="text-xs text-neutral-400">
-                            Preço Un.: {formatBRL(product.unit_price_cents || 0)}
-                          </p>
+                  return (
+                    <tr
+                      key={product.id}
+                      className="border-b border-neutral-800/60 last:border-0 hover:bg-neutral-800/30 transition-colors group cursor-pointer"
+                      onClick={() => onOpenModal && onOpenModal("store_buyers", product)}
+                    >
+                      <td className="py-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={product.image || "https://placehold.co/150x150/1a1a1a/666666?text=Sem+Imagem"}
+                            alt={product.name}
+                            className="w-11 h-11 rounded-lg object-cover bg-neutral-950 border border-neutral-800 shrink-0"
+                          />
+                          <div>
+                            <p className="font-semibold text-white group-hover:text-[#ea580c] transition-colors">
+                              {product.name}
+                            </p>
+                            <p className="text-xs text-neutral-400">
+                              Preço Un.: {formatBRL(product.unit_price_cents || 0)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 text-center">
-                      <span className="bg-neutral-800 text-neutral-200 text-xs font-semibold px-2.5 py-1 rounded-md border border-neutral-700">
-                        {productQty}x
-                      </span>
-                    </td>
-                    <td className="py-3 font-semibold text-emerald-400">
-                      {formatBRL(productRevenue)}
-                    </td>
-                    <td className="py-3 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onOpenModal) onOpenModal("store_buyers", product);
-                        }}
-                        className="inline-flex items-center gap-1.5 bg-neutral-800 hover:bg-[#ea580c] text-neutral-300 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-neutral-700 transition-all"
-                      >
-                        <Eye className="w-3.5 h-3.5" /> Quem Comprou
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td className="py-3 text-center">
+                        <span className="bg-neutral-800 text-neutral-200 text-xs font-semibold px-2.5 py-1 rounded-md border border-neutral-700">
+                          {productQty}x
+                        </span>
+                      </td>
+                      <td className="py-3 font-semibold text-emerald-400">
+                        {formatBRL(productRevenue)}
+                      </td>
+                      <td className="py-3 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onOpenModal) onOpenModal("store_buyers", product);
+                          }}
+                          className="inline-flex items-center gap-1.5 bg-neutral-800 hover:bg-[#ea580c] text-neutral-300 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-neutral-700 transition-all"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Quem Comprou
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

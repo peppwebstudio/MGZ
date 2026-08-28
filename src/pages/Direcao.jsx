@@ -6,7 +6,6 @@ import LojinhaSection from "../components/sections/direcao/LojinhaSection";
 import DirecaoModal from "../components/sections/direcao/DirecaoModal";
 // AQUI ESTÁ A CORREÇÃO: ../../ volta para a raiz do projeto para acessar a pasta server
 import { fetchAthletesFromDB, fetchPaymentsFromDB } from "../../server/direcaoService";
-import { MOCK_STORE_PRODUCTS } from "../components/sections/direcao/data";
 
 export default function Direcao() {
   const navigate = useNavigate();
