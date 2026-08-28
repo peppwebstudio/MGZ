@@ -8,450 +8,156 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Configuração Supabase
-const supabaseUrl = "https://lozwywqilfwpeblhexwn.supabase.co";
-const supabaseKey = "sb_publishable_gASzFHrrR6bjdgq11oiUUw_vEZs67is";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
+const supabase = createClient("https://lozwywqilfwpeblhexwn.supabase.co", "sb_publishable_gASzFHrrR6bjdgq11oiUUw_vEZs67is");
 const asaasAPI = axios.create({
   baseURL: process.env.ASAAS_API_URL || "https://sandbox.asaas.com/api/v3",
-  headers: {
-    access_token: process.env.ASAAS_API_KEY,
-  },
+  headers: { access_token: process.env.ASAAS_API_KEY }
 });
 
-// Helper: Sincroniza o cliente com o banco de dados (Supabase), incluindo CPF
 async function syncAthleteToSupabase({ name, email, cpf, asaasId }) {
   try {
     const cleanCpf = cpf ? cpf.replace(/\D/g, "") : null;
-
-    const { data: existingAthlete, error: fetchErr } = await supabase
-      .from("athletes")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (fetchErr) {
-      console.error("Aviso: Erro ao verificar atleta existente:", fetchErr.message);
-      return;
-    }
-
-    if (!existingAthlete) {
-      const { error: insertErr } = await supabase.from("athletes").insert([{
-        name,
-        email,
-        cpf: cleanCpf,
-        asaas_customer_id: asaasId,
-        association_status: "pending"
-      }]);
-      
-      if (insertErr) {
-        console.error("Aviso: Erro ao inserir atleta no Supabase:", insertErr.message);
-      }
+    const { data: ext } = await supabase.from("athletes").select("id").eq("email", email).maybeSingle();
+    if (!ext) {
+      await supabase.from("athletes").insert([{ name, email, cpf: cleanCpf, asaas_customer_id: asaasId, association_status: "pending" }]);
     } else {
-      const { error: updateErr } = await supabase
-        .from("athletes")
-        .update({ 
-          asaas_customer_id: asaasId,
-          ...(cleanCpf && { cpf: cleanCpf })
-        })
-        .eq("id", existingAthlete.id);
-        
-      if (updateErr) {
-        console.error("Aviso: Erro ao atualizar atleta no Supabase:", updateErr.message);
-      }
+      await supabase.from("athletes").update({ asaas_customer_id: asaasId, ...(cleanCpf && { cpf: cleanCpf }) }).eq("id", ext.id);
     }
-  } catch (err) {
-    console.error("Aviso: Erro inesperado ao sincronizar com Supabase:", err.message);
-  }
+  } catch (e) {}
 }
 
-// Helper: Busca cliente existente pelo CPF ou cria um novo
 async function getOrCreateCustomer({ name, cpfCnpj, email, phone }) {
-  let customerId = null;
+  let id = null;
   const cleanCpf = cpfCnpj ? cpfCnpj.replace(/\D/g, "") : "";
-  
   try {
     const search = await asaasAPI.get(`/customers?cpfCnpj=${cleanCpf}`);
-    if (search.data?.data?.length > 0) {
-      customerId = search.data.data[0].id;
-    }
-  } catch (err) {
-    console.warn("Erro ao buscar cliente por CPF, tentando criar novo...");
+    if (search.data?.data?.length > 0) id = search.data.data[0].id;
+  } catch (e) {}
+  if (!id) {
+    const res = await asaasAPI.post("/customers", { name, cpfCnpj: cleanCpf, email, mobilePhone: phone || "" });
+    id = res.data.id;
   }
-
-  if (!customerId) {
-    const customerResponse = await asaasAPI.post("/customers", {
-      name,
-      cpfCnpj: cleanCpf,
-      email,
-      mobilePhone: phone || "",
-    });
-    customerId = customerResponse.data.id;
-  }
-
-  // Grava no banco de dados como pendente
-  await syncAthleteToSupabase({ name, email, cpf: cleanCpf, asaasId: customerId });
-
-  return customerId;
+  await syncAthleteToSupabase({ name, email, cpf: cleanCpf, asaasId: id });
+  return id;
 }
 
-// 1. Rota de teste
-app.get("/ping", (req, res) => {
-  res.json({ message: "Servidor Manguezal V2 com Lojinha!" });
-});
+app.get("/ping", (req, res) => res.json({ message: "Servidor Manguezal V2 com Lojinha!" }));
 
-// 1.5 Rota do Dashboard para a tela /direcao (Atletas, Pagamentos e Pedidos da Loja)
 app.get("/api/dashboard", async (req, res) => {
   try {
-    const { data: athletes, error: errAthletes } = await supabase.from("athletes").select("*");
-    const { data: payments, error: errPayments } = await supabase.from("payments").select("*").order("paid_at", { ascending: false });
-    const { data: storeOrders, error: errOrders } = await supabase.from("store_orders").select("*, store_order_items(*)").order("created_at", { ascending: false });
-
-    if (errAthletes || errPayments || errOrders) throw new Error("Erro nas tabelas do Supabase");
-
-    res.json({ 
-      athletes: athletes || [], 
-      payments: payments || [],
-      storeOrders: storeOrders || []
-    });
-  } catch (error) {
-    console.error("Erro ao buscar dashboard:", error);
-    res.status(500).json({ error: "Erro ao buscar dados do dashboard" });
-  }
+    const [ath, pay, ord] = await Promise.all([
+      supabase.from("athletes").select("*"),
+      supabase.from("payments").select("*").order("paid_at", { ascending: false }),
+      supabase.from("store_orders").select("*, store_order_items(*)").order("created_at", { ascending: false })
+    ]);
+    res.json({ athletes: ath.data || [], payments: pay.data || [], storeOrders: ord.data || [] });
+  } catch (e) { res.status(500).json({ error: "Erro no dashboard" }); }
 });
 
-// 2. Rota PIX Avulso
 app.post("/api/criar-pix", async (req, res) => {
   try {
     const { name, cpfCnpj, email, phone, value, description } = req.body;
-    const customerId = await getOrCreateCustomer({ name, cpfCnpj, email, phone });
-
-    const today = new Date().toISOString().split("T")[0];
-    const paymentResponse = await asaasAPI.post("/payments", {
-      customer: customerId,
-      billingType: "PIX",
-      value,
-      dueDate: today,
-      description: description || "Pagamento Manguezal",
-    });
-
-    const paymentId = paymentResponse.data.id;
-    const pixResponse = await asaasAPI.get(`/payments/${paymentId}/pixQrCode`);
-
-    return res.json({
-      paymentId,
-      encodedImage: pixResponse.data.encodedImage,
-      payload: pixResponse.data.payload,
-    });
-  } catch (error) {
-    console.error("Erro ao gerar PIX:", error.response?.data || error.message);
-    return res.status(500).json({
-      error: error.response?.data?.errors?.[0]?.description || "Falha ao gerar cobrança PIX.",
-    });
-  }
+    const customer = await getOrCreateCustomer({ name, cpfCnpj, email, phone });
+    const pay = await asaasAPI.post("/payments", { customer, billingType: "PIX", value, dueDate: new Date().toISOString().split("T")[0], description: description || "Pagamento Manguezal" });
+    const pix = await asaasAPI.get(`/payments/${pay.data.id}/pixQrCode`);
+    res.json({ paymentId: pay.data.id, encodedImage: pix.data.encodedImage, payload: pix.data.payload });
+  } catch (e) { res.status(500).json({ error: e.response?.data?.errors?.[0]?.description || "Falha PIX" }); }
 });
 
-// 3. Rota Cartão Avulso
 app.post("/api/criar-cartao", async (req, res) => {
   try {
     const { name, cpfCnpj, email, phone, value, description, creditCard, creditCardHolderInfo } = req.body;
-    const customerId = await getOrCreateCustomer({ name, cpfCnpj, email, phone });
-
-    const today = new Date().toISOString().split("T")[0];
-    const paymentResponse = await asaasAPI.post("/payments", {
-      customer: customerId,
-      billingType: "CREDIT_CARD",
-      value,
-      dueDate: today,
-      description: description || "Pagamento Manguezal",
-      creditCard,
-      creditCardHolderInfo,
-    });
-
-    return res.json({
-      paymentId: paymentResponse.data.id,
-      status: paymentResponse.data.status,
-    });
-  } catch (error) {
-    console.error("Erro no cartão:", error.response?.data || error.message);
-    return res.status(500).json({
-      error: error.response?.data?.errors?.[0]?.description || "Falha ao processar cartão de crédito.",
-    });
-  }
+    const customer = await getOrCreateCustomer({ name, cpfCnpj, email, phone });
+    const pay = await asaasAPI.post("/payments", { customer, billingType: "CREDIT_CARD", value, dueDate: new Date().toISOString().split("T")[0], description: description || "Pagamento Manguezal", creditCard, creditCardHolderInfo });
+    res.json({ paymentId: pay.data.id, status: pay.data.status });
+  } catch (e) { res.status(500).json({ error: e.response?.data?.errors?.[0]?.description || "Falha Cartão" }); }
 });
 
-// 4. Rota Assinatura
 app.post("/api/criar-assinatura", async (req, res) => {
   try {
     const { name, cpfCnpj, email, phone, value, cycle, billingType, creditCard, creditCardHolderInfo } = req.body;
-    const customerId = await getOrCreateCustomer({ name, cpfCnpj, email, phone });
-
-    const today = new Date().toISOString().split("T")[0];
-    const subData = {
-      customer: customerId,
-      billingType: billingType || "CREDIT_CARD",
-      value,
-      nextDueDate: today,
-      cycle: cycle || "MONTHLY",
-      description: "Associação Atlética Manguezal",
-    };
-
-    if (billingType === "CREDIT_CARD") {
-      subData.creditCard = creditCard;
-      subData.creditCardHolderInfo = creditCardHolderInfo;
-    }
-
-    const subResponse = await asaasAPI.post("/subscriptions", subData);
-    const subscriptionId = subResponse.data.id;
-
+    const customer = await getOrCreateCustomer({ name, cpfCnpj, email, phone });
+    const subData = { customer, billingType: billingType || "CREDIT_CARD", value, nextDueDate: new Date().toISOString().split("T")[0], cycle: cycle || "MONTHLY", description: "Associação Atlética Manguezal" };
+    if (billingType === "CREDIT_CARD") { subData.creditCard = creditCard; subData.creditCardHolderInfo = creditCardHolderInfo; }
+    const sub = await asaasAPI.post("/subscriptions", subData);
     if (billingType === "PIX") {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      const paymentsResponse = await asaasAPI.get(`/subscriptions/${subscriptionId}/payments`);
-      const firstPayment = paymentsResponse.data.data?.[0];
-
-      if (firstPayment) {
-        const pixResponse = await asaasAPI.get(`/payments/${firstPayment.id}/pixQrCode`);
-        return res.json({
-          subscriptionId,
-          paymentId: firstPayment.id,
-          encodedImage: pixResponse.data.encodedImage,
-          payload: pixResponse.data.payload,
-          billingType: "PIX",
-        });
+      await new Promise(r => setTimeout(r, 1500));
+      const pays = await asaasAPI.get(`/subscriptions/${sub.data.id}/payments`);
+      if (pays.data.data?.[0]) {
+        const pix = await asaasAPI.get(`/payments/${pays.data.data[0].id}/pixQrCode`);
+        return res.json({ subscriptionId: sub.data.id, paymentId: pays.data.data[0].id, encodedImage: pix.data.encodedImage, payload: pix.data.payload, billingType: "PIX" });
       }
     }
-
-    return res.json({
-      subscriptionId,
-      status: subResponse.data.status || "ACTIVE",
-      billingType,
-    });
-  } catch (error) {
-    console.error("Erro na assinatura:", error.response?.data || error.message);
-    return res.status(500).json({
-      error: error.response?.data?.errors?.[0]?.description || "Falha ao criar assinatura.",
-    });
-  }
+    res.json({ subscriptionId: sub.data.id, status: sub.data.status || "ACTIVE", billingType });
+  } catch (e) { res.status(500).json({ error: e.response?.data?.errors?.[0]?.description || "Falha Assinatura" }); }
 });
 
-// ==========================================
-// 5. Checkout da Lojinha com Validação de CPF e Registro no Supabase
-// ==========================================
 app.post("/api/checkout-loja", async (req, res) => {
   try {
-    const { 
-      customer, 
-      paymentMethod, 
-      cardData, 
-      cartItems = [], 
-      hasSocioItems, 
-      totalValue, 
-      description 
-    } = req.body;
-
+    const { customer, paymentMethod, cardData, cartItems = [], hasSocioItems, totalValue, description } = req.body;
     const cleanCpf = customer.cpfCnpj ? customer.cpfCnpj.replace(/\D/g, "") : "";
-
-    console.log(`Recebendo pedido da lojinha: ${customer.name}, CPF: ${cleanCpf}, Valor: R$ ${totalValue}`);
-
-    // Validação de Sócio por CPF (procura na base pelo CPF ou pelo Email)
+    
     if (hasSocioItems) {
-      let athlete = null;
-
-      if (cleanCpf) {
-        const { data: athleteByCpf } = await supabase
-          .from("athletes")
-          .select("association_status")
-          .eq("cpf", cleanCpf)
-          .maybeSingle();
-        athlete = athleteByCpf;
-      }
-
-      if (!athlete && customer.email) {
-        const { data: athleteByEmail } = await supabase
-          .from("athletes")
-          .select("association_status")
-          .eq("email", customer.email)
-          .maybeSingle();
-        athlete = athleteByEmail;
-      }
-
-      if (!athlete || athlete.association_status !== "active") {
-        return res.status(400).json({ 
-          isSocioError: true, 
-          error: "O CPF/E-mail informado não consta como sócio ativo na nossa base. regularize sua situação ou entre em contato." 
-        });
-      }
+      let ath = null;
+      if (cleanCpf) ath = (await supabase.from("athletes").select("association_status").eq("cpf", cleanCpf).maybeSingle()).data;
+      if (!ath && customer.email) ath = (await supabase.from("athletes").select("association_status").eq("email", customer.email).maybeSingle()).data;
+      if (!ath || ath.association_status !== "active") return res.status(400).json({ isSocioError: true, error: "O CPF/E-mail informado não consta como sócio ativo." });
     }
 
-    // Cria ou busca o cliente no Asaas
-    const customerId = await getOrCreateCustomer({ 
-      name: customer.name, 
-      cpfCnpj: cleanCpf, 
-      email: customer.email, 
-      phone: ""
-    });
-
+    const customerId = await getOrCreateCustomer({ name: customer.name, cpfCnpj: cleanCpf, email: customer.email, phone: "" });
     const today = new Date().toISOString().split("T")[0];
-    let paymentId = null;
-    let pixData = null;
-    let initialStatus = "pending";
+    let payId, pixData = null, status = "pending";
 
-    // Processamento via PIX
     if (paymentMethod === "pix") {
-      const paymentResponse = await asaasAPI.post("/payments", {
-        customer: customerId,
-        billingType: "PIX",
-        value: totalValue,
-        dueDate: today,
-        description: description,
-      });
-
-      paymentId = paymentResponse.data.id;
-      const pixResponse = await asaasAPI.get(`/payments/${paymentId}/pixQrCode`);
-      pixData = pixResponse.data;
-
-    // Processamento via Cartão de Crédito
+      const pay = await asaasAPI.post("/payments", { customer: customerId, billingType: "PIX", value: totalValue, dueDate: today, description });
+      payId = pay.data.id;
+      pixData = (await asaasAPI.get(`/payments/${payId}/pixQrCode`)).data;
     } else if (paymentMethod === "credit_card") {
-      const paymentResponse = await asaasAPI.post("/payments", {
-        customer: customerId,
-        billingType: "CREDIT_CARD",
-        value: totalValue,
-        dueDate: today,
-        description: description,
-        creditCard: cardData?.creditCard, 
-        creditCardHolderInfo: cardData?.creditCardHolderInfo
-      });
-
-      paymentId = paymentResponse.data.id;
-      if (paymentResponse.data.status === "CONFIRMED" || paymentResponse.data.status === "RECEIVED") {
-        initialStatus = "confirmed";
-      }
+      const pay = await asaasAPI.post("/payments", { customer: customerId, billingType: "CREDIT_CARD", value: totalValue, dueDate: today, description, creditCard: cardData?.creditCard, creditCardHolderInfo: cardData?.creditCardHolderInfo });
+      payId = pay.data.id;
+      if (["CONFIRMED", "RECEIVED"].includes(pay.data.status)) status = "confirmed";
     } else {
-      return res.status(400).json({ error: "Método de pagamento inválido." });
+      return res.status(400).json({ error: "Método inválido." });
     }
 
-    // Grava o pedido na tabela store_orders do Supabase
-    const { data: orderData, error: orderErr } = await supabase
-      .from("store_orders")
-      .insert([{
-        customer_name: customer.name,
-        customer_cpf: cleanCpf,
-        customer_email: customer.email,
-        total_cents: Math.round(totalValue * 100),
-        payment_method: paymentMethod,
-        status: initialStatus,
-        asaas_payment_id: paymentId
-      }])
-      .select("id")
-      .single();
+    const { data: order } = await supabase.from("store_orders").insert([{
+      customer_name: customer.name, customer_cpf: cleanCpf, customer_email: customer.email, customer_turma: customer.turma,
+      total_cents: Math.round(totalValue * 100), payment_method: paymentMethod, status, asaas_payment_id: payId
+    }]).select("id").single();
 
-    if (orderErr) {
-      console.error("Erro ao gravar pedido na loja (Supabase):", orderErr.message);
-    } else if (orderData && cartItems.length > 0) {
-      // Grava os itens do pedido com detalhes (tamanho, preço e modalidade)
-      const orderItemsToInsert = cartItems.map((item) => ({
-        order_id: orderData.id,
-        product_id: item.id || null,
-        product_name: item.name || "Produto",
-        quantity: item.quantity || 1,
-        size: item.size || "Único",
-        unit_price_cents: Math.round((item.price || 0) * 100),
-        price_type: item.isSocioPrice ? "socio" : "geral"
-      }));
-
-      const { error: itemsErr } = await supabase.from("store_order_items").insert(orderItemsToInsert);
-      if (itemsErr) console.error("Erro ao gravar itens do pedido (Supabase):", itemsErr.message);
+    if (order && cartItems.length > 0) {
+      await supabase.from("store_order_items").insert(cartItems.map(i => ({
+        order_id: order.id, product_id: i.id || null, product_name: i.name || "Produto", quantity: i.quantity || 1, size: i.size || "Único",
+        unit_price_cents: Math.round((i.price || 0) * 100), price_type: i.userType === "Sócio Atleta" ? "socio" : "geral"
+      })));
     }
 
-    if (paymentMethod === "pix") {
-      return res.json({
-        paymentId,
-        encodedImage: pixData.encodedImage,
-        payload: pixData.payload,
-      });
-    } else {
-      return res.json({ 
-        success: true, 
-        paymentId,
-        message: "Pagamento aprovado com sucesso!" 
-      });
-    }
-
-  } catch (error) {
-    console.error("Erro na rota /api/checkout-loja:", error.response?.data || error.message);
-    return res.status(500).json({ 
-      error: error.response?.data?.errors?.[0]?.description || "Erro interno no servidor ao processar o pagamento." 
-    });
-  }
+    if (paymentMethod === "pix") return res.json({ paymentId: payId, encodedImage: pixData.encodedImage, payload: pixData.payload });
+    res.json({ success: true, paymentId: payId, message: "Aprovado!" });
+  } catch (e) { res.status(500).json({ error: e.response?.data?.errors?.[0]?.description || "Erro no pagamento" }); }
 });
 
-// 6. Webhook com Persistência
 app.post("/webhook/asaas", async (req, res) => {
-  const evento = req.body;
-  console.log("Notificação do Asaas recebida:", evento.event);
-
-  if (evento.event === "PAYMENT_RECEIVED" || evento.event === "PAYMENT_CONFIRMED") {
-    const pagamento = evento.payment;
-    const asaasCustomerId = pagamento.customer;
-
+  const ev = req.body;
+  if (["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"].includes(ev.event)) {
+    const pay = ev.payment, desc = pay.description || "";
     try {
-      // 1. Atualiza compras da lojinha vinculadas a este pagamento
-      const { error: storeErr } = await supabase
-        .from("store_orders")
-        .update({ status: "confirmed" })
-        .eq("asaas_payment_id", pagamento.id);
-
-      if (storeErr) console.error("Aviso ao atualizar pedido da loja no webhook:", storeErr.message);
-
-      // 2. Atualiza status do atleta (Assinatura / Plano)
-      const { error: updateErr } = await supabase
-        .from("athletes")
-        .update({ association_status: "active" })
-        .eq("asaas_customer_id", asaasCustomerId);
-        
-      if (updateErr) console.error("Erro ao atualizar status do atleta (Webhook):", updateErr.message);
-
-      // 3. Busca o nome do atleta para salvar no histórico de mensalidades
-      const { data: athlete, error: athleteErr } = await supabase
-        .from("athletes")
-        .select("id, name")
-        .eq("asaas_customer_id", asaasCustomerId)
-        .maybeSingle();
-
-      if (athleteErr) console.error("Erro ao buscar atleta (Webhook):", athleteErr.message);
-
-      // 4. Salva o pagamento de mensalidade/avulso
-      const { error: paymentErr } = await supabase.from("payments").insert([{
-        athlete_id: athlete?.id || null,
-        user_name: athlete?.name || "Desconhecido",
-        payment_type: pagamento.description && pagamento.description.includes("Avulso") ? "single_training" : "monthly", 
-        amount_cents: Math.round(pagamento.value * 100),
-        payment_method: pagamento.billingType.toLowerCase(),
-        status: "confirmed",
-        paid_at: new Date().toISOString().split("T")[0],
-        asaas_payment_id: pagamento.id
-      }]);
-      
-      if (paymentErr) {
-        console.error("Erro ao salvar histórico de pagamento (Webhook):", paymentErr.message);
+      if (desc.includes("Lojinha")) {
+        await supabase.from("store_orders").update({ status: "confirmed" }).eq("asaas_payment_id", pay.id);
       } else {
-        console.log(`✅ Pagamento Salvo no Banco! Valor: R$ ${pagamento.value}`);
+        await supabase.from("athletes").update({ association_status: "active" }).eq("asaas_customer_id", pay.customer);
+        const { data: ath } = await supabase.from("athletes").select("id, name").eq("asaas_customer_id", pay.customer).maybeSingle();
+        await supabase.from("payments").insert([{
+          athlete_id: ath?.id || null, user_name: ath?.name || "Desconhecido", payment_type: desc.includes("Avulso") ? "single_training" : "monthly",
+          amount_cents: Math.round(pay.value * 100), payment_method: pay.billingType.toLowerCase(), status: "confirmed",
+          paid_at: new Date().toISOString().split("T")[0], asaas_payment_id: pay.id
+        }]);
       }
-    } catch (dbError) {
-      console.error("Erro ao processar webhook no banco:", dbError.message);
-    }
+    } catch (e) {}
   }
-
   res.status(200).send("OK");
 });
 
-// Garantia: Qualquer rota desconhecida devolve JSON
-app.use((req, res) => {
-  res.status(404).json({ error: "Rota não encontrada no servidor." });
-});
-
+app.use((req, res) => res.status(404).json({ error: "Rota não encontrada." }));
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 VAI RENDER PELO AMOR DE DEUS! Porta: ${PORT}`);
-});
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 VAI RENDER! Porta: ${PORT}`));
