@@ -8,6 +8,10 @@ export const PRODUCTS = [
     priceSocio: 35.00,
     priceNormal: 45.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214316947.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214316947.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Leque oficial da Atlética Manguezal. Ideal para se refrescar nos treinos e jogos da maior Atlética de Pernambuco.",
     sizes: ["Único"]
   },
@@ -17,6 +21,11 @@ export const PRODUCTS = [
     priceSocio: 150.00,
     priceNormal: 165.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214233725.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214233725.png",
+      // "COLE_AQUI_A_FOTO_DAS_COSTAS_DA_JERSEY",
+      // "COLE_AQUI_O_GUIA_DE_MEDIDAS_DA_JERSEY"
+    ],
     description: "Jersey de baseball oficial da Manguezal e a mais bonita do Brasil ",
     sizes: ["XP", "PP", "P", "M", "G", "GG", "XG"]
   },
@@ -26,6 +35,10 @@ export const PRODUCTS = [
     priceSocio: 130.00,
     priceNormal: 145.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214127066.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214127066.png",
+      // "COLE_AQUI_O_GUIA_DE_MEDIDAS_DA_JERSEY_RETRO"
+    ],
     description: "Jersey retrô oficial da Manguezal, com gola polo, Ideal para usar em qualquer ocasião.",
     sizes: ["XP", "PP", "P", "M", "G", "GG", "XG"]
   },
@@ -35,6 +48,10 @@ export const PRODUCTS = [
     priceSocio: 35.00,
     priceNormal: 45.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_213804604.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_213804604.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Caneca Bicampeão + Tirante Bicampeão Laranja ou LGBT.",
     sizes: ["Tirante Laranja", "Tirante LGBT"]
   },
@@ -44,6 +61,10 @@ export const PRODUCTS = [
     priceSocio: 6.00,
     priceNormal: 12.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214419867.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214419867.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Tirante Bicampeão Laranja e Preto, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
     sizes: ["Único"]
   },
@@ -53,6 +74,10 @@ export const PRODUCTS = [
     priceSocio: 6.00,
     priceNormal: 12.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214623061.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214623061.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Tirante Bicampeão LGBT, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
     sizes: ["Único"]
   },
@@ -62,6 +87,10 @@ export const PRODUCTS = [
     priceSocio: 35.00,
     priceNormal: 45.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214921660.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_214921660.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Caneca 360 + Tirante Comum, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
     sizes: ["Comum Laranja", "ComumLGBT"]
   },
@@ -71,6 +100,10 @@ export const PRODUCTS = [
     priceSocio: 30.00,
     priceNormal: 35.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215656848.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215656848.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Caneca 360, ideal para tomar a pororoca.",
     sizes: ["Único"]
   },
@@ -80,6 +113,10 @@ export const PRODUCTS = [
     priceSocio: 6.00,
     priceNormal: 12.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215523572.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215523572.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Tirante Comum Laranja, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
     sizes: ["Único"]
   },
@@ -89,6 +126,10 @@ export const PRODUCTS = [
     priceSocio: 6.00,
     priceNormal: 12.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215807414.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_215807414.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Tirante Comum LGBT, ideal para pendurar sua caneca oficial da Atlética Manguezal.",
     sizes: ["Único"]
   },
@@ -98,6 +139,10 @@ export const PRODUCTS = [
     priceSocio: 55.00,
     priceNormal: 65.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220419016.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220419016.png",
+      // "COLE_AQUI_O_GUIA_DE_MEDIDAS_DA_OVERSIZED"
+    ],
     description: "Camisa Oversized Bicampeão, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG"]
   },
@@ -107,6 +152,10 @@ export const PRODUCTS = [
     priceSocio: 50.00,
     priceNormal: 65.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220608883.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220608883.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Camisa Passeio Preta, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG"]
   },
@@ -116,6 +165,10 @@ export const PRODUCTS = [
     priceSocio: 50.00,
     priceNormal: 65.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220727589.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_220727589.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Camisa Passeio Branca, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG"]
   },
@@ -125,6 +178,10 @@ export const PRODUCTS = [
     priceSocio: 40.00,
     priceNormal: 55.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221148491.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221148491.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Cropped Preto, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG"]
   },
@@ -134,6 +191,10 @@ export const PRODUCTS = [
     priceSocio: 40.00,
     priceNormal: 55.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221504554.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221504554.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Cropped Branca, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG"]
   },
@@ -143,6 +204,10 @@ export const PRODUCTS = [
     priceSocio: 35.00,
     priceNormal: 45.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221940802.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_221940802.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Bandana Retrô, ideal para usar no dia a dia e nas festas",
     sizes: ["Único"]
   },
@@ -152,6 +217,10 @@ export const PRODUCTS = [
     priceSocio: 35.00,
     priceNormal: 45.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_222713448.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_222713448.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Bandana Comum, ideal para usar no dia a dia e nas festas",
     sizes: ["Único"]
   },
@@ -161,6 +230,10 @@ export const PRODUCTS = [
     priceSocio: 60.00,
     priceNormal: 70.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_223658514.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_223658514.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Tube Top Laranja, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG"]
   },
@@ -170,6 +243,10 @@ export const PRODUCTS = [
     priceSocio: 60.00,
     priceNormal: 70.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_223229703.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_223229703.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Tube Top Preto, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG"]
   },
@@ -179,6 +256,10 @@ export const PRODUCTS = [
     priceSocio: 70.00,
     priceNormal: 80.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_224520724.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_224520724.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Top Regatinha Preto, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG", "XXG"]
   },
@@ -188,6 +269,10 @@ export const PRODUCTS = [
     priceSocio: 65.00,
     priceNormal: 80.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_232516068.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_232516068.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Top Amarração Preto, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG", "XG", "XXG"]
   },
@@ -197,15 +282,23 @@ export const PRODUCTS = [
     priceSocio: 80.00,
     priceNormal: 90.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_234210187.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_234210187.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Calça Dry Fit, ideal para usar no dia a dia e nas festas",
     sizes: ["PP", "P", "M", "G", "GG"]
   },
   {
     id: 23,
-    name: "Short Saia ",
+    name: "Short Saia",
     priceSocio: 67.00,
     priceNormal: 77.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_234401935.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_234401935.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Short Saia , ideal para usar no dia a dia e nas festas",
     sizes: ["P", "M", "G", "GG", "XG"]
   },
@@ -215,6 +308,10 @@ export const PRODUCTS = [
     priceSocio: 45.00,
     priceNormal: 55.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_235006981.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_235006981.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Short Doll, ideal para usar no dia a dia e nas festas",
     sizes: ["P", "M", "G", "GG", "XG"]
   },
@@ -224,6 +321,10 @@ export const PRODUCTS = [
     priceSocio: 47.00,
     priceNormal: 57.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_235159098.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-25_235159098.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Calção Esportivo, ideal para usar no dia a dia e nos treinos",
     sizes: ["P", "M", "G", "GG"]
   },
@@ -233,6 +334,10 @@ export const PRODUCTS = [
     priceSocio: 43.00,
     priceNormal: 53.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_005554459.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_005554459.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Colete de jogo, ideal para usar nos treinos e dia a dia",
     sizes: ["Único"]
   },
@@ -242,6 +347,10 @@ export const PRODUCTS = [
     priceSocio: 35.00,
     priceNormal: 45.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_005904951.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_005904951.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Bucket, ideal para usar no dia a dia e nas festas",
     sizes: ["Único"]
   },
@@ -251,6 +360,10 @@ export const PRODUCTS = [
     priceSocio: 25.00,
     priceNormal: 35.00,
     image: "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_010805647.png",
+    gallery: [
+      "https://6a8c573297833836f657fbdc.imgix.net/sandbox/imagem_2026-08-26_010805647.png",
+      // "COLE_AQUI_A_PROXIMA_FOTO"
+    ],
     description: "Meias, ideal para usar nos treinos e jogos",
     sizes: ["Único"]
   }
