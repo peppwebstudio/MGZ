@@ -4,8 +4,7 @@ import { formatBRL } from "./data"; // Certifique-se de que o caminho está corr
 export default function LojinhaSection({ storeOrders = [], onOpenModal }) {
   
   // 1. Pega EXCLUSIVAMENTE os pedidos que estão com status "confirmed" no Supabase
-const confirmedOrders = storeOrders; // MUDAMOS AQUI PARA TESTAR
-console.log("PEDIDOS DA LOJA:", storeOrders); // OLHE O CONSOLE DO NAVEGADOR
+  const confirmedOrders = storeOrders.filter(order => order.status === "confirmed");
 
   // 2. Transforma os dados brutos de pedidos em uma lista agrupada por produtos
   const productsMap = {};
