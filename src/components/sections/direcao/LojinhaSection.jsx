@@ -3,17 +3,13 @@ import { formatBRL } from "./data";
 
 export default function LojinhaSection({ storeOrders = [], onOpenModal }) {
   
-  // 🔥 RASTREADOR: Isso vai imprimir os dados na tela "escondida" do seu navegador
-  console.log("🔥 DADOS RECEBIDOS NA LOJINHA:", storeOrders);
-
-  // 1. TEMPORARIAMENTE DESATIVADO: Pega todos os pedidos (até os não pagos) para ver se aparecem
-  const confirmedOrders = storeOrders; 
+  // 1. Pega EXCLUSIVAMENTE os pedidos que estão com status "confirmed" no Supabase
+  const confirmedOrders = storeOrders.filter(order => order.status === "confirmed");
 
   // 2. Transforma os dados brutos de pedidos em uma lista agrupada por produtos
   const productsMap = {};
 
   confirmedOrders.forEach((order) => {
-    // RESTO DO SEU CÓDIGO CONTINUA IGUAL A PARTIR DAQUI...
     const items = order.store_order_items || [];
     
     items.forEach((item) => {

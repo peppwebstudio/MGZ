@@ -4,11 +4,11 @@ import DirecaoHeader from "../components/sections/direcao/DirecaoHeader";
 import AssociadosSection from "../components/sections/direcao/AssociadosSection";
 import LojinhaSection from "../components/sections/direcao/LojinhaSection";
 import DirecaoModal from "../components/sections/direcao/DirecaoModal";
-// AQUI ESTÁ A CORREÇÃO: Adicionada a função que busca os dados da lojinha do direcaoService
+
 import { 
   fetchAthletesFromDB, 
   fetchPaymentsFromDB, 
-  fetchStoreProductsFromDB // <- Adicione o nome correto da sua função aqui
+  fetchStoreProductsFromDB // Mantive o nome original da sua função de busca
 } from "../../server/direcaoService";
 
 export default function Direcao() {
@@ -18,8 +18,8 @@ export default function Direcao() {
   const [athletes, setAthletes] = useState([]);
   const [payments, setPayments] = useState([]);
   
-  // Estado que guarda os produtos/vendas
-  const [storeProducts, setStoreProducts] = useState([]);
+  // 🔥 MUDANÇA 1: O estado agora se chama storeOrders para combinar com a Lojinha
+  const [storeOrders, setStoreOrders] = useState([]);
   const [modalData, setModalData] = useState(null);
 
   const loadDashboardData = async () => {
@@ -27,16 +27,16 @@ export default function Direcao() {
       setLoading(true);
       setError(null);
 
-      // CORREÇÃO: O Promise.all agora faz 3 requisições paralelas ao invés de 2
-      const [athletesData, paymentsData, storeProductsData] = await Promise.all([
+      const [athletesData, paymentsData, storeOrdersData] = await Promise.all([
         fetchAthletesFromDB(),
         fetchPaymentsFromDB(),
-        fetchStoreProductsFromDB(), // <- Busca os dados da lojinha
+        fetchStoreProductsFromDB(), // Essa função busca os pedidos brutos lá no seu service
       ]);
 
       setAthletes(athletesData);
       setPayments(paymentsData);
-      setStoreProducts(storeProductsData || []); // <- Atualiza o estado para renderizar
+      // 🔥 MUDANÇA 2: Seta os pedidos brutos no novo estado
+      setStoreOrders(storeOrdersData || []); 
     } catch (err) {
       console.error("Erro ao carregar dados do Asaas/Banco:", err);
       setError("Falha ao carregar informações do dashboard.");
@@ -111,8 +111,9 @@ export default function Direcao() {
           onOpenModal={handleOpenModal}
         />
 
+        {/* 🔥 MUDANÇA 3: Agora a etiqueta bate perfeitamente! */}
         <LojinhaSection
-          storeProducts={storeProducts}
+          storeOrders={storeOrders}
           onOpenModal={handleOpenModal}
         />
       </main>
