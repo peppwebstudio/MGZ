@@ -1,14 +1,55 @@
 import { ShoppingBag, Tag, Package, ShoppingCart, Eye } from "lucide-react";
 import { formatBRL } from "./data"; // Certifique-se de que o caminho está correto
 
-export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
-  // Cálculo do faturamento total com Number() para evitar concatenação de strings do Supabase
+export default function LojinhaSection({ storeOrders = [], onOpenModal }) {
+  
+  // 1. Pega EXCLUSIVAMENTE os pedidos que estão com status "confirmed" no Supabase
+  const confirmedOrders = storeOrders.filter(order => order.status === "confirmed");
+
+  // 2. Transforma os dados brutos de pedidos em uma lista agrupada por produtos
+  const productsMap = {};
+
+  confirmedOrders.forEach((order) => {
+    const items = order.store_order_items || [];
+    
+    items.forEach((item) => {
+      // Agrupa usando o ID do produto ou o nome (caso o ID seja nulo)
+      const prodKey = item.product_id || item.product_name;
+
+      if (!productsMap[prodKey]) {
+        productsMap[prodKey] = {
+          id: prodKey,
+          name: item.product_name,
+          unit_price_cents: item.unit_price_cents,
+          // Como o BD de transações não salva a foto, deixamos vazia para usar o placeholder
+          image: null, 
+          buyers: []
+        };
+      }
+
+      // Adiciona as informações reais do comprador que vieram do Supabase
+      productsMap[prodKey].buyers.push({
+        order_id: order.id,
+        customer_name: order.customer_name,
+        customer_email: order.customer_email,
+        customer_turma: order.customer_turma,
+        quantity: item.quantity,
+        total_cents: Number(item.quantity) * Number(item.unit_price_cents),
+        date: order.created_at
+      });
+    });
+  });
+
+  // Converte o nosso mapa agrupado em um Array para mapear na tela
+  const storeProducts = Object.values(productsMap);
+
+  // 3. Cálculo do faturamento total com Number() blindado (baseado nos dados reais)
   const storeTotalRevenue = storeProducts.reduce((acc, product) => {
     const buyers = product.buyers || [];
     return acc + buyers.reduce((bAcc, buyer) => bAcc + Number(buyer.total_cents || 0), 0);
   }, 0);
 
-  // Cálculo total de unidades vendidas blindado com Number()
+  // 4. Cálculo total de unidades vendidas blindado com Number()
   const storeTotalItemsSold = storeProducts.reduce((acc, product) => {
     const buyers = product.buyers || [];
     return acc + buyers.reduce((bAcc, buyer) => bAcc + Number(buyer.quantity || 0), 0);
@@ -64,7 +105,7 @@ export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
                   <td colSpan={4} className="py-8 text-center text-neutral-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <ShoppingBag className="w-8 h-8 text-neutral-700" />
-                      <p>Nenhuma venda registrada na lojinha ainda.</p>
+                      <p>Nenhuma venda confirmada registrada na lojinha ainda.</p>
                     </div>
                   </td>
                 </tr>
@@ -72,7 +113,6 @@ export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
                 storeProducts.map((product) => {
                   const buyers = product.buyers || [];
                   
-                  // Também garantindo que o reduce interno não concatene strings acidentalmente
                   const productQty = buyers.reduce((acc, b) => acc + Number(b.quantity || 0), 0);
                   const productRevenue = buyers.reduce((acc, b) => acc + Number(b.total_cents || 0), 0);
 
