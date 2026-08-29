@@ -4,8 +4,12 @@ import DirecaoHeader from "../components/sections/direcao/DirecaoHeader";
 import AssociadosSection from "../components/sections/direcao/AssociadosSection";
 import LojinhaSection from "../components/sections/direcao/LojinhaSection";
 import DirecaoModal from "../components/sections/direcao/DirecaoModal";
-// AQUI ESTÁ A CORREÇÃO: ../../ volta para a raiz do projeto para acessar a pasta server
-import { fetchAthletesFromDB, fetchPaymentsFromDB } from "../../server/direcaoService";
+// AQUI ESTÁ A CORREÇÃO: Adicionada a função que busca os dados da lojinha do direcaoService
+import { 
+  fetchAthletesFromDB, 
+  fetchPaymentsFromDB, 
+  fetchStoreProductsFromDB // <- Adicione o nome correto da sua função aqui
+} from "../../server/direcaoService";
 
 export default function Direcao() {
   const navigate = useNavigate();
@@ -14,7 +18,7 @@ export default function Direcao() {
   const [athletes, setAthletes] = useState([]);
   const [payments, setPayments] = useState([]);
   
-  // INICIA COM ARRAY VAZIO AO INVÉS DO MOCK
+  // Estado que guarda os produtos/vendas
   const [storeProducts, setStoreProducts] = useState([]);
   const [modalData, setModalData] = useState(null);
 
@@ -23,16 +27,19 @@ export default function Direcao() {
       setLoading(true);
       setError(null);
 
-      const [athletesData, paymentsData] = await Promise.all([
+      // CORREÇÃO: O Promise.all agora faz 3 requisições paralelas ao invés de 2
+      const [athletesData, paymentsData, storeProductsData] = await Promise.all([
         fetchAthletesFromDB(),
         fetchPaymentsFromDB(),
+        fetchStoreProductsFromDB(), // <- Busca os dados da lojinha
       ]);
 
       setAthletes(athletesData);
       setPayments(paymentsData);
+      setStoreProducts(storeProductsData || []); // <- Atualiza o estado para renderizar
     } catch (err) {
       console.error("Erro ao carregar dados do Asaas/Banco:", err);
-      setError("Falha ao carregar informações dos sócios.");
+      setError("Falha ao carregar informações do dashboard.");
     } finally {
       setLoading(false);
     }

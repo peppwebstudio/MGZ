@@ -2,16 +2,16 @@ import { ShoppingBag, Tag, Package, ShoppingCart, Eye } from "lucide-react";
 import { formatBRL } from "./data"; // Certifique-se de que o caminho está correto
 
 export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
-  // Cálculo do faturamento total considerando apenas dados reais do banco
+  // Cálculo do faturamento total com Number() para evitar concatenação de strings do Supabase
   const storeTotalRevenue = storeProducts.reduce((acc, product) => {
     const buyers = product.buyers || [];
-    return acc + buyers.reduce((bAcc, buyer) => bAcc + (buyer.total_cents || 0), 0);
+    return acc + buyers.reduce((bAcc, buyer) => bAcc + Number(buyer.total_cents || 0), 0);
   }, 0);
 
-  // Cálculo total de unidades vendidas
+  // Cálculo total de unidades vendidas blindado com Number()
   const storeTotalItemsSold = storeProducts.reduce((acc, product) => {
     const buyers = product.buyers || [];
-    return acc + buyers.reduce((bAcc, buyer) => bAcc + (buyer.quantity || 0), 0);
+    return acc + buyers.reduce((bAcc, buyer) => bAcc + Number(buyer.quantity || 0), 0);
   }, 0);
 
   return (
@@ -71,8 +71,10 @@ export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
               ) : (
                 storeProducts.map((product) => {
                   const buyers = product.buyers || [];
-                  const productQty = buyers.reduce((acc, b) => acc + (b.quantity || 0), 0);
-                  const productRevenue = buyers.reduce((acc, b) => acc + (b.total_cents || 0), 0);
+                  
+                  // Também garantindo que o reduce interno não concatene strings acidentalmente
+                  const productQty = buyers.reduce((acc, b) => acc + Number(b.quantity || 0), 0);
+                  const productRevenue = buyers.reduce((acc, b) => acc + Number(b.total_cents || 0), 0);
 
                   return (
                     <tr
@@ -92,7 +94,7 @@ export default function LojinhaSection({ storeProducts = [], onOpenModal }) {
                               {product.name}
                             </p>
                             <p className="text-xs text-neutral-400">
-                              Preço Un.: {formatBRL(product.unit_price_cents || 0)}
+                              Preço Un.: {formatBRL(Number(product.unit_price_cents || 0))}
                             </p>
                           </div>
                         </div>
