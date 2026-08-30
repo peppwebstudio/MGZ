@@ -1,8 +1,28 @@
-import { X, Calendar, ShoppingBag, CreditCard } from "lucide-react";
-import { formatBRL, formatDate, PAY_LABELS } from "./data";
+import { X, Calendar, ShoppingBag, CreditCard, CheckCircle2, Clock } from "lucide-react";
+// Removi o formatDate da importação abaixo porque criamos um melhor e mais seguro dentro do componente
+import { formatBRL, PAY_LABELS } from "./data";
 
 export default function DirecaoModal({ modalData, onClose }) {
   if (!modalData) return null;
+
+  // ==========================================
+  // FORMATADOR BLINDADO DE DATA (Apenas DD/MM/AAAA)
+  // ==========================================
+  const formatarData = (dataIso) => {
+    if (!dataIso) return "-";
+    try {
+      const d = new Date(dataIso);
+      if (isNaN(d.getTime())) return dataIso; // Se vier texto quebrado, devolve como veio
+      
+      const dia = String(d.getDate()).padStart(2, '0');
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const ano = d.getFullYear();
+      
+      return `${dia}/${mes}/${ano}`;
+    } catch (error) {
+      return dataIso;
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -27,45 +47,38 @@ export default function DirecaoModal({ modalData, onClose }) {
             modalData.list.map((item, index) => {
               
               // ==========================================
-              // BUSCA PROFUNDA DOS DADOS (Evita erros do BD)
+              // BUSCA PROFUNDA (Lidando com as tabelas do Supabase)
               // ==========================================
               
-              // 1. Verificando se é sócio (procura na raiz e no metadata)
-              const checkMember = (val) => val === true || val === "true" || val === "member" || val === "socio";
+              // 0. Acessando a tabela 'store_order_items' que vem junto com o pedido
+              const orderItems = item.store_order_items || item.items || [];
+              const firstItem = orderItems[0] || {}; // Pega o primeiro produto comprado
+              
+              // 1. Verificando se é sócio (procura na tabela filha, raiz e metadata)
+              const rawPriceType = item.price_type || firstItem.price_type || item.metadata?.price_type || "";
               const isMember = 
-                checkMember(item.is_member) || 
-                checkMember(item.metadata?.is_member) || 
-                checkMember(item.price_type) || 
-                checkMember(item.metadata?.price_type) ||
-                checkMember(item.metadata?.tipo_ingresso);
+                rawPriceType.toLowerCase() === "socio" || 
+                rawPriceType.toLowerCase() === "member" ||
+                item.is_member === true || 
+                item.metadata?.is_member === true;
 
-              // 2. Nome do comprador
-              const buyerName = 
-                item.buyer_name || 
-                item.customer_name || 
-                item.user_name || 
-                item.name || 
-                item.metadata?.buyer_name || 
-                item.metadata?.nome || 
-                "Cliente não identificado";
+              // 2. Nome e Email do comprador
+              const buyerName = item.customer_name || item.buyer_name || item.user_name || item.name || "Cliente não identificado";
+              const buyerEmail = item.customer_email || item.buyer_email || item.email || "";
 
-              // 3. Email do comprador
-              const buyerEmail = 
-                item.buyer_email || 
-                item.customer_email || 
-                item.email || 
-                item.metadata?.buyer_email || 
-                item.metadata?.email || 
-                "";
-
-              // 4. Detalhes do Produto (Tamanho, Quantidade, Valor)
-              const size = item.size || item.tamanho || item.metadata?.size || item.metadata?.tamanho || "-";
-              const quantity = item.quantity || item.quantidade || item.metadata?.quantity || 1;
+              // 3. Detalhes do Produto (Tamanho, Quantidade, Valor)
+              // Agora ele busca o 'size' dentro da tabela 'store_order_items'
+              const size = firstItem.size || item.size || item.tamanho || item.metadata?.size || "-";
+              const quantity = firstItem.quantity || item.quantity || item.quantidade || 1;
               const totalAmount = item.total_cents || item.amount_cents || item.amount_total || item.amount || 0;
               
-              // 5. Pagamento e Data
+              // 4. Status de Pagamento e Método
+              const statusText = (item.status || "pending").toLowerCase();
+              const isPaid = statusText === "paid" || statusText === "confirmed" || statusText === "recebido" || statusText === "received";
               const payMethod = item.payment_method || item.payment_type || item.metadata?.payment_method;
-              const purchaseDate = item.date || item.created_at || item.paid_at || item.created;
+              
+              // 5. Data limpa
+              const purchaseDate = item.created_at || item.paid_at || item.date || item.created;
 
               return (
                 <div
@@ -75,6 +88,7 @@ export default function DirecaoModal({ modalData, onClose }) {
                   {/* LAYOUT EXCLUSIVO PARA COMPRADORES DA LOJINHA */}
                   {modalData.type === "store_buyers" ? (
                     <div className="flex flex-col gap-3">
+                      
                       {/* Linha 1: Dados do Cliente e Valores */}
                       <div className="flex justify-between items-start gap-4">
                         <div className="space-y-1">
@@ -106,6 +120,17 @@ export default function DirecaoModal({ modalData, onClose }) {
 
                       {/* Linha 2: Detalhes do Pedido (Rodapé do Card) */}
                       <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-neutral-800/60 mt-1">
+                        
+                        {/* Status (Pago ou Pendente) */}
+                        <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border ${
+                          isPaid 
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                            : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                        }`}>
+                          {isPaid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                          <span className="font-medium">{isPaid ? "Pago" : "Pendente"}</span>
+                        </div>
+
                         <div className="flex items-center gap-1.5 text-xs bg-neutral-900 text-neutral-300 px-2.5 py-1.5 rounded-md border border-neutral-800">
                           <ShoppingBag className="w-3.5 h-3.5 text-neutral-500" />
                           <span>Tam: <strong className="text-white">{size}</strong></span>
@@ -122,15 +147,17 @@ export default function DirecaoModal({ modalData, onClose }) {
                           </div>
                         )}
 
+                        {/* Data agora bonitinha DD/MM/AAAA */}
                         <div className="flex items-center gap-1.5 text-xs text-neutral-400 ml-auto bg-neutral-900/50 px-2.5 py-1.5 rounded-md">
                           <Calendar className="w-3.5 h-3.5" />
-                          <span>{formatDate(purchaseDate)}</span>
+                          <span>{formatarData(purchaseDate)}</span>
                         </div>
+
                       </div>
                     </div>
                   ) : (
                     
-                    /* LAYOUT PARA ATLETAS E PAGAMENTOS (Mantido o formato atual) */
+                    /* LAYOUT PARA ATLETAS E PAGAMENTOS (Mensalidades) */
                     <div className="flex items-center justify-between gap-3">
                       <div className="space-y-1">
                         <p className="font-semibold text-white text-sm">
@@ -143,12 +170,12 @@ export default function DirecaoModal({ modalData, onClose }) {
                           item.association_status === "inactive" ? (
                             <div className="flex items-center gap-1.5 text-xs text-red-400/90 pt-0.5">
                               <Calendar className="w-3.5 h-3.5" />
-                              <span>Desligado em: <strong>{formatDate(item.inactive_at)}</strong></span>
+                              <span>Desligado em: <strong>{formatarData(item.inactive_at)}</strong></span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-1.5 text-xs text-neutral-400 pt-0.5">
                               <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                              <span>Expira em: <strong className="text-neutral-200">{formatDate(item.expires_at)}</strong></span>
+                              <span>Expira em: <strong className="text-neutral-200">{formatarData(item.expires_at)}</strong></span>
                             </div>
                           )
                         )}
@@ -156,7 +183,7 @@ export default function DirecaoModal({ modalData, onClose }) {
                         {modalData.type === "payment" && (
                           <div className="flex items-center gap-1.5 text-xs text-neutral-400 pt-0.5">
                             <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                            <span>Pago em: <strong className="text-neutral-200">{formatDate(item.paid_at)}</strong></span>
+                            <span>Pago em: <strong className="text-neutral-200">{formatarData(item.paid_at)}</strong></span>
                           </div>
                         )}
                         
