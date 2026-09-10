@@ -1,8 +1,7 @@
 import { ShoppingBag, Tag, Package, ShoppingCart, Eye } from "lucide-react";
-import { formatBRL } from "./data";
+import { formatBRL } from "./data"; // Ajuste o caminho se necessário
 
 export default function LojinhaSection({ storeOrders = [], onOpenModal }) {
-  
   // 1. Pega EXCLUSIVAMENTE os pedidos que estão com status "confirmed" no Supabase
   const confirmedOrders = storeOrders.filter(order => order.status === "confirmed");
 
@@ -35,7 +34,9 @@ export default function LojinhaSection({ storeOrders = [], onOpenModal }) {
         customer_turma: order.customer_turma,
         quantity: item.quantity,
         total_cents: Number(item.quantity) * Number(item.unit_price_cents),
-        date: order.created_at
+        date: order.created_at,
+        size: item.size || "-", // <-- Adicionado o tamanho
+        price_type: item.price_type || "geral" // <-- Adicionado o tipo de preço
       });
     });
   });
