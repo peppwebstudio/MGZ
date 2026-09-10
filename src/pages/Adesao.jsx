@@ -9,13 +9,14 @@ const USE_MOCK = false;
 const PLANS = [
   {
     id: "teste_3",
-    name: "Plano de Teste",
+    name: "Plano de Teste (14 Dias)",
     value: 3.0,
-    months: 1,
-    cycle: "MONTHLY",
-    allowSubscription: true,
+    months: 0,
+    days: 14,
+    cycle: "SINGLE",
+    allowSubscription: false,
     label: "Apenas Teste",
-    benefits: ["Plano exclusivo para teste de pagamento", "Pode ser cancelado a qualquer momento"],
+    benefits: ["Validade de 14 dias", "Plano exclusivo para teste de pagamento"],
   },
   {
     id: "token_18",
@@ -68,6 +69,15 @@ const calculateValidUntil = (monthsCount) => {
   return `${year}-${month}-${day}`;
 };
 
+const calculateValidUntilDays = (daysCount) => {
+  const target = new Date();
+  target.setDate(target.getDate() + daysCount);
+  const year = target.getFullYear();
+  const month = String(target.getMonth() + 1).padStart(2, "0");
+  const day = String(target.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 async function safeFetch(url, options) {
   const res = await fetch(url, options);
   const contentType = res.headers.get("content-type");
@@ -91,7 +101,7 @@ export default function Adesao() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [selectedPlanId, setSelectedPlanId] = useState("teste_3");
-  const [planType, setPlanType] = useState("recorrente");
+  const [planType, setPlanType] = useState("unico");
   const [paymentMethod, setPaymentMethod] = useState("CREDIT_CARD");
 
   const [name, setName] = useState("");
@@ -131,7 +141,10 @@ export default function Adesao() {
     const cleanPhone = phone.replace(/\D/g, "");
     const cleanCardNumber = cardNumber.replace(/\D/g, "");
     const cleanCep = postalCode.replace(/\D/g, "");
-    const validUntilDate = calculateValidUntil(selectedPlan.months);
+    
+    const validUntilDate = selectedPlan.days 
+      ? calculateValidUntilDays(selectedPlan.days) 
+      : calculateValidUntil(selectedPlan.months);
 
     try {
       if (USE_MOCK) {
