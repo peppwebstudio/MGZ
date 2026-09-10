@@ -1,6 +1,13 @@
 import { ShoppingBag, Tag, Package, ShoppingCart, Eye } from "lucide-react";
 import { formatBRL } from "./data"; // Ajuste o caminho se necessário
 
+// Mapeie aqui os IDs ou Nomes exatos dos produtos com seus respectivos links de imagem
+const PRODUCT_IMAGES = {
+  "id-do-produto-1": "https://exemplo.com/imagem-camisa-branca.jpg",
+  "id-do-produto-2": "https://exemplo.com/imagem-camisa-preta.jpg",
+  "Camisa Treino Laranja": "https://exemplo.com/imagem-camisa-laranja.jpg" 
+};
+
 export default function LojinhaSection({ storeOrders = [], onOpenModal }) {
   // 1. Pega EXCLUSIVAMENTE os pedidos que estão com status "confirmed" no Supabase
   const confirmedOrders = storeOrders.filter(order => order.status === "confirmed");
@@ -20,8 +27,8 @@ export default function LojinhaSection({ storeOrders = [], onOpenModal }) {
           id: prodKey,
           name: item.product_name,
           unit_price_cents: item.unit_price_cents,
-          // Como o BD de transações não salva a foto, deixamos vazia para usar o placeholder
-          image: null, 
+          // Puxa a foto do dicionário acima pelo ID. Se não achar, usa o placeholder.
+          image: PRODUCT_IMAGES[prodKey] || null, 
           buyers: []
         };
       }
@@ -35,8 +42,8 @@ export default function LojinhaSection({ storeOrders = [], onOpenModal }) {
         quantity: item.quantity,
         total_cents: Number(item.quantity) * Number(item.unit_price_cents),
         date: order.created_at,
-        size: item.size || "-", // <-- Adicionado o tamanho
-        price_type: item.price_type || "geral" // <-- Adicionado o tipo de preço
+        size: item.size || "-", 
+        price_type: item.price_type || "geral" 
       });
     });
   });
