@@ -1,12 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Loader2, CreditCard, QrCode, Copy, X, Zap, ShieldCheck } from "lucide-react";
-import SiteHeader from "../components/site/SiteHeader";
+import SiteHeader from "../layout/SiteHeader";
 
 const BACKEND_URL = "https://manguezal-backend.onrender.com";
 const USE_MOCK = false;
 
 const PLANS = [
+  {
+    id: "teste_3",
+    name: "Plano de Teste",
+    value: 3.0,
+    months: 1,
+    cycle: "MONTHLY",
+    allowSubscription: true,
+    label: "Apenas Teste",
+    benefits: ["Plano exclusivo para teste de pagamento", "Pode ser cancelado a qualquer momento"],
+  },
   {
     id: "token_18",
     name: "1 Token de Treino",
@@ -80,7 +90,7 @@ export default function Adesao() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [selectedPlanId, setSelectedPlanId] = useState("mensal_70");
+  const [selectedPlanId, setSelectedPlanId] = useState("teste_3");
   const [planType, setPlanType] = useState("recorrente");
   const [paymentMethod, setPaymentMethod] = useState("CREDIT_CARD");
 
@@ -100,7 +110,7 @@ export default function Adesao() {
   const [pixResult, setPixResult] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const selectedPlan = PLANS.find((p) => p.id === selectedPlanId) || PLANS[1];
+  const selectedPlan = PLANS.find((p) => p.id === selectedPlanId) || PLANS[0];
   const planValue = selectedPlan.value;
   const isSubscription = planType === "recorrente" && selectedPlan.allowSubscription;
 
