@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Loader2, CreditCard, QrCode, Copy, X, Zap, ShieldCheck } from "lucide-react";
-import SiteHeader from "../layout/SiteHeader";
+import SiteHeader from "../components/site/SiteHeader";
 
 const BACKEND_URL = "https://manguezal-backend.onrender.com";
 const USE_MOCK = false;
